@@ -91,10 +91,10 @@ def build_agent(model_str: str):
     if model_str == "test":
         from pydantic_ai.models.test import TestModel
 
-        model = TestModel(call_tools=["generate_column_chart", "generate_line_chart"])
+        model = TestModel(call_tools=["generate_column_chart", "generate_line_chart", "show_kpi"])
     else:
         model = model_str
-    return Agent(model, instructions=core.INSTRUCTIONS, toolsets=[MCPToolset(core.make_transport())])
+    return Agent(model, instructions=core.INSTRUCTIONS, tools=core.AGENT_TOOLS, toolsets=[MCPToolset(core.make_transport())])
 
 
 async def run(request):

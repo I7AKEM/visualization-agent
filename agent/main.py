@@ -58,11 +58,28 @@ Rules:
 3. Call exactly ONE chart tool that best answers the question, with an Arabic
    title and Arabic axis titles. Prefer the simple forms — column, bar, line,
    area, pie, scatter — one measure, one axis.
+   EXCEPTION: if the answer is a single number (one KPI, a total, one row) —
+   call `show_kpi` instead of any chart tool. A chart with one bar is noise;
+   a big number with a label is the correct visualization.
 4. Answer in Arabic: one headline sentence with the key number, two or three
    supporting sentences with real figures, then mention the chart you produced.
 5. Numbers in your text must come from the CSV — never invent or round beyond
    one decimal.
 """
+
+
+def show_kpi(value: str, label: str, context: str = "") -> str:
+    """Display one headline number as a KPI card instead of a chart.
+
+    Use this when the result is a single figure (a total, one KPI, a one-row
+    result). `value` is the formatted number (e.g. "35,300,000"), `label` names
+    it in Arabic (e.g. "إجمالي عدد السكان"), `context` optionally adds one short
+    comparison or note in Arabic.
+    """
+    return "ok"
+
+
+AGENT_TOOLS = [show_kpi]
 
 
 def start_render_server() -> subprocess.Popen:
@@ -151,7 +168,7 @@ async def run_agent(question: str) -> None:
     from pydantic_ai.mcp import MCPToolset
 
     csv_text = (ROOT / "data/monthly_transactions.csv").read_text(encoding="utf-8")
-    agent = Agent(MODEL, instructions=INSTRUCTIONS, toolsets=[MCPToolset(make_transport())])
+    agent = Agent(MODEL, instructions=INSTRUCTIONS, tools=AGENT_TOOLS, toolsets=[MCPToolset(make_transport())])
 
     before = {p.name for p in OUT.glob("*.png")} if OUT.exists() else set()
     print(f"model: {MODEL}\nquestion: {question}\n--- running agent ---")

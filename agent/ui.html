@@ -48,6 +48,10 @@
   .ev.tool pre { margin:6px 0 0; max-height:140px; overflow:auto; background:var(--code-bg); border-radius:6px; padding:7px 9px; font-size:.72rem; white-space:pre-wrap; word-break:break-all; }
   .ev.answer { font-size:.98rem; line-height:1.75; white-space:pre-wrap; }
   .ev.answer.streaming::after { content:"▍"; color:var(--accent); }
+  .ev.kpi { padding:18px 16px; }
+  .ev.kpi .v { font-size:2.3rem; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; color:var(--accent-ink); }
+  .ev.kpi .l { font-size:.95rem; color:var(--ink-2); font-weight:600; margin-top:2px; }
+  .ev.kpi .c { font-size:.8rem; color:var(--ink-3); margin-top:6px; }
   .ev.chart .live { width:100%; height:340px; }
   .ev.chart img { max-width:100%; border-radius:6px; display:block; background:#fff; }
   .ev.chart .cap { font-size:.74rem; color:var(--ink-3); margin-top:5px; font-family:ui-monospace,monospace; word-break:break-all; }
@@ -184,6 +188,13 @@
       if (pretty.length > 4000) pretty = pretty.slice(0, 4000) + '\n… (truncated for display — full args were used for the chart)';
       ev('tool', '<span class="t">⚙ ' + esc(msg.tool) + '</span><details><summary>arguments</summary><pre>' + esc(pretty) + '</pre></details>');
       var entry = { tool: msg.tool, live: false, card: null };
+      if (msg.tool === 'show_kpi' && args) {
+        var tile = ev('kpi', '<div class="v" dir="auto">' + esc(args.value) + '</div><div class="l" dir="auto">' + esc(args.label || '') + '</div>' + (args.context ? '<div class="c" dir="auto">' + esc(args.context) + '</div>' : ''));
+        entry.kind = 'kpi'; entry.card = tile;
+        pendingCharts.push(entry);
+        answerEl = null;
+        return;
+      }
       var spec = window.G2 && args ? specFromTool(msg.tool, args) : null;
       if (spec) {
         var card = ev('chart', '<div class="live"></div><div class="cap">' + esc(msg.tool) + ' — rendered live in your browser (hover it) · <span class="png">PNG: rendering…</span></div>');
@@ -198,7 +209,11 @@
       pendingCharts.push(entry);
       answerEl = null;
     } else if (msg.type === 'tool_result') {
-      var pend = pendingCharts.shift();
+      // tools run concurrently, so results can arrive out of call order — match by name
+      var idx = -1;
+      for (var k = 0; k < pendingCharts.length; k++) { if (pendingCharts[k].tool === msg.tool) { idx = k; break; } }
+      var pend = idx >= 0 ? pendingCharts.splice(idx, 1)[0] : null;
+      if (pend && pend.kind === 'kpi') { answerEl = null; return; }
       var isImage = /^https?:\S+\.(png|jpe?g|svg|webp)\b/i.test(msg.content);
       if (pend && pend.live && isImage) {
         pend.card.querySelector('.png').innerHTML = '<a href="' + esc(msg.content) + '" target="_blank">PNG for export ↗</a>';
