@@ -33,6 +33,22 @@ node -r ./demos/css-noop.cjs demos/02-insights.mjs        # insights → stdout
 node -r ./demos/css-noop.cjs demos/03-mcp-e2e.mjs         # MCP end-to-end → out/mcp-*.png
 ```
 
+## Scale probe + chart bench
+
+```sh
+node -r ./demos/css-noop.cjs demos/05-scale-probe.mjs   # timings for 1k/5k/20k rows
+```
+
+Measured: AVA analyzes 20,000 rows in ~2.4 s; a 5,000-point unaggregated line takes
+~7.5 s to render and 300 categories render into an unreadable wall (`out/07-*.png`).
+Raw rows through an MCP tool call cost ~33k tokens per 1,000 rows — so the pipeline
+must aggregate (GROUP BY / top-N + Other) before charting, always.
+
+`ui/chart-bench.html` is a self-contained browser bench (also published as an
+artifact): paste/upload a CSV + optional question → column profiling, automatic
+aggregation, an AntV G2 chart, and a streamed explanation composed from computed
+facts (AVA insights included). Open the file in any browser — no server needed.
+
 ## Use it with Claude yourself
 
 ```sh
