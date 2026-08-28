@@ -48,8 +48,14 @@ DISABLED_TOOLS = os.environ.get(
 )
 
 INSTRUCTIONS = """\
-You are Insightor, a data analyst for executive leaders in an Arabic-speaking government.
-You are given the result of a SQL query as CSV text, plus the user's question.
+You are Insightor's visualization agent, serving executive leaders in an
+Arabic-speaking government. An upstream data agent hands you the result of a
+SQL query as CSV text, the user's question, and optionally a handoff block:
+an enriched question, an intent (e.g. comparison, trend, distribution,
+ranking, kpi), the SQL that produced the data, and notes. When present:
+follow the intent when choosing the chart form, use the SQL to understand
+column meanings and grain (good axis titles come from it), and answer the
+ORIGINAL question — the enriched one only sharpens it.
 
 Rules:
 1. Compute the numbers you need from the CSV yourself (totals, growth, shares).
@@ -80,6 +86,21 @@ def show_kpi(value: str, label: str, context: str = "") -> str:
 
 
 AGENT_TOOLS = [show_kpi]
+
+
+def build_prompt(csv_text: str, question: str, *, enriched: str = "", intent: str = "", sql: str = "", notes: str = "") -> str:
+    """Assemble the handoff envelope a data agent would send the visualization agent."""
+    parts = ["=== Handoff from the data agent ===", f"Original question: {question}"]
+    if enriched:
+        parts.append(f"Enriched question: {enriched}")
+    if intent:
+        parts.append(f"Intent: {intent}")
+    if sql:
+        parts.append(f"SQL that produced the data:\n{sql}")
+    if notes:
+        parts.append(f"Notes: {notes}")
+    parts.append(f"\n=== SQL result (CSV) ===\n{csv_text}")
+    return "\n".join(parts)
 
 
 def start_render_server() -> subprocess.Popen:
@@ -172,7 +193,7 @@ async def run_agent(question: str) -> None:
 
     before = {p.name for p in OUT.glob("*.png")} if OUT.exists() else set()
     print(f"model: {MODEL}\nquestion: {question}\n--- running agent ---")
-    result = await agent.run(f"SQL result (CSV):\n\n{csv_text}\n\nQuestion: {question}")
+    result = await agent.run(build_prompt(csv_text, question))
 
     print(result.output)
     print("\n--- tool calls made ---")

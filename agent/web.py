@@ -102,6 +102,7 @@ async def run(request):
     csv_text = (body.get("csv") or "").strip()
     question = (body.get("question") or "").strip() or "حلّل البيانات وقدّم أبرز النتائج للقيادة."
     model_str = (body.get("model") or core.MODEL).strip()
+    handoff = {k: (body.get(k) or "").strip() for k in ("enriched", "intent", "sql", "notes")}
 
     if not csv_text:
         return JSONResponse({"error": "CSV is empty"}, status_code=400)
@@ -124,7 +125,10 @@ async def run(request):
                 agent = build_agent(model_str)
                 rows = csv_text.count("\n")
                 yield line({"type": "status", "message": f"CSV handed to the model: ~{rows} rows, {len(csv_text)} chars"})
-                prompt = f"SQL result (CSV):\n\n{csv_text}\n\nQuestion: {question}"
+                provided = [k for k, v in handoff.items() if v]
+                if provided:
+                    yield line({"type": "status", "message": "handoff from data agent: " + ", ".join(provided)})
+                prompt = core.build_prompt(csv_text, question, **handoff)
                 async with agent.run_stream_events(prompt) as events:
                     async for ev in events:
                         kind = type(ev).__name__

@@ -76,6 +76,22 @@
       </div>
       <label for="q">Question · السؤال</label>
       <input type="text" id="q" dir="auto" value="أي المناطق سجلت أعلى نمو في المعاملات خلال 2025؟ وما حجم الفارق؟">
+      <details style="margin-top:10px">
+        <summary style="cursor:pointer;font-size:.78rem;color:var(--ink-2)">Data-agent handoff — optional (mock what Insightor's data agent sends along)</summary>
+        <label for="enriched">Enriched question</label>
+        <input type="text" id="enriched" dir="auto" placeholder="السؤال بعد إثرائه من وكيل البيانات">
+        <label for="intent">Intent</label>
+        <input type="text" id="intent" list="intents" placeholder="comparison / trend / distribution / ranking / kpi">
+        <datalist id="intents">
+          <option value="comparison"></option><option value="trend"></option>
+          <option value="distribution"></option><option value="ranking"></option>
+          <option value="kpi"></option><option value="correlation"></option>
+        </datalist>
+        <label for="sql">SQL that produced the CSV</label>
+        <textarea id="sql" spellcheck="false" style="min-height:70px" placeholder="SELECT month, region, SUM(tx) AS transactions … GROUP BY 1,2"></textarea>
+        <label for="notes">Notes</label>
+        <input type="text" id="notes" dir="auto" placeholder="time grain = month · locale = ar-SA · fiscal year …">
+      </details>
       <label for="model">Model (pydantic-ai string)</label>
       <input type="text" id="model" spellcheck="false">
       <div class="row">
@@ -241,7 +257,10 @@
       var res = await fetch('/api/run', {
         method: 'POST', signal: controller.signal,
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ csv: $('csv').value, question: $('q').value, model: $('model').value }),
+        body: JSON.stringify({
+          csv: $('csv').value, question: $('q').value, model: $('model').value,
+          enriched: $('enriched').value, intent: $('intent').value, sql: $('sql').value, notes: $('notes').value,
+        }),
       });
       if (!res.ok) { var e = await res.json(); ev('error', esc(e.error || res.statusText)); return; }
       var reader = res.body.getReader(), dec = new TextDecoder(), buf = '';
