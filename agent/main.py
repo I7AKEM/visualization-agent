@@ -39,6 +39,14 @@ RENDER_PORT = int(os.environ.get("RENDER_PORT", "3100"))
 MODEL = os.environ.get("AGENT_MODEL", "openrouter:anthropic/claude-opus-4.6")
 MCP_SERVER_JS = ROOT / "node_modules/@antv/mcp-server-chart/build/index.js"
 
+# Removed from the MCP tool menu entirely (server-side), so no model can pick
+# them: dual-axes charts mislead (two units, one plot), liquid gauges and word
+# clouds decorate rather than inform. Override with AGENT_DISABLED_TOOLS.
+DISABLED_TOOLS = os.environ.get(
+    "AGENT_DISABLED_TOOLS",
+    "generate_dual_axes_chart,generate_liquid_chart,generate_word_cloud_chart",
+)
+
 INSTRUCTIONS = """\
 You are Insightor, a data analyst for executive leaders in an Arabic-speaking government.
 You are given the result of a SQL query as CSV text, plus the user's question.
@@ -48,7 +56,8 @@ Rules:
 2. AGGREGATE before charting: a chart gets at most ~12 categories or ~5 series.
    Never pass raw rows into a chart tool.
 3. Call exactly ONE chart tool that best answers the question, with an Arabic
-   title and Arabic axis titles.
+   title and Arabic axis titles. Prefer the simple forms — column, bar, line,
+   area, pie, scatter — one measure, one axis.
 4. Answer in Arabic: one headline sentence with the key number, two or three
    supporting sentences with real figures, then mention the chart you produced.
 5. Numbers in your text must come from the CSV — never invent or round beyond
@@ -103,7 +112,11 @@ def make_transport():
     return StdioTransport(
         command="node",
         args=[str(MCP_SERVER_JS)],
-        env={**os.environ, "VIS_REQUEST_SERVER": f"http://127.0.0.1:{RENDER_PORT}"},
+        env={
+            **os.environ,
+            "VIS_REQUEST_SERVER": f"http://127.0.0.1:{RENDER_PORT}",
+            "DISABLED_TOOLS": DISABLED_TOOLS,
+        },
     )
 
 
