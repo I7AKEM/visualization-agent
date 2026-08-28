@@ -58,15 +58,19 @@ Rules:
 
 def start_render_server() -> subprocess.Popen:
     """Launch the private chart renderer (demos/render-server.mjs) and wait for it."""
+    log_path = ROOT / "render-server.log"
+    log = open(log_path, "w")
     proc = subprocess.Popen(
         ["node", "-r", "./demos/css-noop.cjs", "demos/render-server.mjs"],
         cwd=ROOT,
         env={**os.environ, "PORT": str(RENDER_PORT)},
-        stdout=subprocess.DEVNULL,
+        stdout=log,
         stderr=subprocess.STDOUT,
     )
     deadline = time.time() + 20
     while time.time() < deadline:
+        if proc.poll() is not None:
+            break  # node exited — no point waiting out the deadline
         with socket.socket() as s:
             s.settimeout(0.3)
             try:
@@ -75,7 +79,16 @@ def start_render_server() -> subprocess.Popen:
             except OSError:
                 time.sleep(0.3)
     proc.terminate()
-    raise RuntimeError(f"render server did not come up on port {RENDER_PORT}")
+    log.flush()
+    tail = log_path.read_text(encoding="utf-8", errors="replace")[-2500:] or "(no output)"
+    raise RuntimeError(
+        f"render server did not come up on port {RENDER_PORT}.\n"
+        f"--- {log_path.name} (tail) ---\n{tail}\n"
+        "Common cause: the `canvas` native module has no prebuilt binary for your Node "
+        "version (very new/odd-numbered Node). Fix: use Node LTS (22 or 24) and re-run "
+        "`npm i`, or build canvas from source: "
+        "`brew install pkg-config cairo pango libpng jpeg giflib librsvg && npm rebuild canvas`."
+    )
 
 
 def make_transport():

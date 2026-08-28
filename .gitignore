@@ -1,3 +1,4 @@
 node_modules/
 agent/.venv/
 __pycache__/
+render-server.log
