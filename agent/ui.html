@@ -122,7 +122,7 @@
     $('model').value = h.model;
     $('health').innerHTML = 'model: <b>' + esc(h.model) + '</b> · API key: ' + (h.has_key ? '<b>found</b>' : 'missing (set OPENROUTER_API_KEY, or use model "test")') +
       ' · MCP server: ' + (h.mcp_server ? '<b>installed</b>' : 'missing — run npm install') +
-      ' · live charts: ' + (window.G2 ? '<b>on</b> (G2 in browser)' : '<b>off</b> — restart agent/web.py after git pull (G2 not served)') + ' · UI v3';
+      ' · live charts: ' + (window.G2 ? '<b>on</b> (G2 in browser)' : '<b>off</b> — restart agent/web.py after git pull (G2 not served)') + ' · UI v4 (handoff)';
   }).catch(function () { $('health').textContent = 'server unreachable'; });
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
