@@ -67,7 +67,9 @@ def start_render_server() -> subprocess.Popen:
         stdout=log,
         stderr=subprocess.STDOUT,
     )
-    deadline = time.time() + 20
+    # First-ever run on a machine can be slow: Fontconfig builds its font cache
+    # silently (macOS with many fonts: can exceed a minute). Later runs are instant.
+    deadline = time.time() + int(os.environ.get("RENDER_TIMEOUT", "150"))
     while time.time() < deadline:
         if proc.poll() is not None:
             break  # node exited — no point waiting out the deadline
@@ -84,10 +86,12 @@ def start_render_server() -> subprocess.Popen:
     raise RuntimeError(
         f"render server did not come up on port {RENDER_PORT}.\n"
         f"--- {log_path.name} (tail) ---\n{tail}\n"
-        "Common cause: the `canvas` native module has no prebuilt binary for your Node "
-        "version (very new/odd-numbered Node). Fix: use Node LTS (22 or 24) and re-run "
-        "`npm i`, or build canvas from source: "
-        "`brew install pkg-config cairo pango libpng jpeg giflib librsvg && npm rebuild canvas`."
+        "If the log shows a canvas/module error: use Node LTS (22/24) and re-run `npm i`, "
+        "or build canvas from source (brew install pkg-config cairo pango libpng jpeg giflib "
+        "librsvg && npm rebuild canvas). If there is NO output: the first run may still be "
+        "building the system font cache — run `node -r ./demos/css-noop.cjs demos/render-server.mjs` "
+        "in the foreground once and wait for 'render server on'; later runs are instant. "
+        "RENDER_TIMEOUT env raises this wait."
     )
 
 
