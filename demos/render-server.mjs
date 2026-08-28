@@ -3,7 +3,7 @@
 // chart spec here (VIS_REQUEST_SERVER) and gets back { success, resultObj: <url> }.
 // Nothing leaves the machine — required posture for government data.
 import http from 'node:http';
-import { readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, mkdirSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { render } from '@antv/gpt-vis-ssr';
 import { OUT } from './lib.mjs';
@@ -13,6 +13,7 @@ let seq = 0;
 
 export function startRenderServer(port = PORT) {
   mkdirSync(OUT, { recursive: true });
+  seq = readdirSync(OUT).filter((f) => f.startsWith('mcp-')).length;
   const server = http.createServer(async (req, res) => {
     try {
       if (req.method === 'GET' && req.url.startsWith('/images/')) {
