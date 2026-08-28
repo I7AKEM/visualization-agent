@@ -5,6 +5,7 @@
 import http from 'node:http';
 import { readFileSync, mkdirSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { render } from '@antv/gpt-vis-ssr';
 import { OUT } from './lib.mjs';
 
@@ -48,4 +49,6 @@ export function startRenderServer(port = PORT) {
   }));
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) startRenderServer();
+// pathToFileURL handles percent-encoding (spaces etc.) — a plain
+// `file://${process.argv[1]}` comparison silently fails in paths with spaces.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) startRenderServer();
