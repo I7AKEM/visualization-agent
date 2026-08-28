@@ -14,13 +14,20 @@ you ──question──► pydantic-ai Agent (LLM via OpenRouter)
 
 ## Setup (once)
 
+Needs **Python 3.10+** (3.11+ recommended — what this was tested on) and Node 20+.
+On macOS the system `python3` is often too old — `brew install python@3.12` first.
+
 ```sh
 # from the repo root — Node deps (MCP server + renderer) must already be installed
 npm install
 
-# Python side
-uv venv agent/.venv
-VIRTUAL_ENV=agent/.venv uv pip install -r agent/requirements.txt
+# Python side (plain venv; or use uv if you have it)
+python3.12 -m venv agent/.venv          # any python >= 3.10 works
+agent/.venv/bin/pip install --upgrade pip
+agent/.venv/bin/pip install -r agent/requirements.txt
+
+# fonts — Linux: cp fonts/*.ttf ~/.local/share/fonts/ && fc-cache -f
+#         macOS: cp fonts/*.ttf ~/Library/Fonts/   (optional; mac has Arabic fonts)
 ```
 
 ## Verify the wiring — no API key needed
