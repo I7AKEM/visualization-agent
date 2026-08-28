@@ -48,8 +48,10 @@
   .ev.tool pre { margin:6px 0 0; max-height:140px; overflow:auto; background:var(--code-bg); border-radius:6px; padding:7px 9px; font-size:.72rem; white-space:pre-wrap; word-break:break-all; }
   .ev.answer { font-size:.98rem; line-height:1.75; white-space:pre-wrap; }
   .ev.answer.streaming::after { content:"▍"; color:var(--accent); }
+  .ev.chart .live { width:100%; height:340px; }
   .ev.chart img { max-width:100%; border-radius:6px; display:block; background:#fff; }
   .ev.chart .cap { font-size:.74rem; color:var(--ink-3); margin-top:5px; font-family:ui-monospace,monospace; word-break:break-all; }
+  .ev.chart .cap a { color:var(--accent-ink); }
   details summary { cursor:pointer; font-size:.76rem; color:var(--ink-2); }
   .usage { font-family:ui-monospace,monospace; font-size:.76rem; color:var(--ink-3); }
 </style>
@@ -57,7 +59,7 @@
 <body>
 <div class="wrap">
   <h1>Insightor Agent — live MCP run</h1>
-  <p class="sub">Paste a CSV and a question. A real LLM decides, calls the real <code>@antv/mcp-server-chart</code> over MCP, and charts render locally. Watch every step below.</p>
+  <p class="sub">Paste a CSV and a question. A real LLM decides, calls the real <code>@antv/mcp-server-chart</code> over MCP, and charts render <b>live and interactive</b> in this page — hover them — with a PNG kept for export.</p>
   <div class="health" id="health">checking server…</div>
 
   <div class="grid">
@@ -87,16 +89,20 @@
   </div>
 </div>
 
+<script src="/vendor/g2.min.js"></script>
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var feed = $('feed'), controller = null, answerEl = null;
+  var pendingCharts = [];   // cards created on tool_call, completed on tool_result
+  var liveCharts = [];      // G2 instances, destroyed on each new run
 
   fetch('/api/health').then(function (r) { return r.json(); }).then(function (h) {
     $('model').value = h.model;
     $('health').innerHTML = 'model: <b>' + esc(h.model) + '</b> · API key: ' + (h.has_key ? '<b>found</b>' : 'missing (set OPENROUTER_API_KEY, or use model "test")') +
-      ' · MCP server: ' + (h.mcp_server ? '<b>installed</b>' : 'missing — run npm install');
+      ' · MCP server: ' + (h.mcp_server ? '<b>installed</b>' : 'missing — run npm install') +
+      ' · live charts: ' + (window.G2 ? '<b>on</b> (G2 in browser)' : 'off — CDN unreachable, PNG fallback');
   }).catch(function () { $('health').textContent = 'server unreachable'; });
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
@@ -108,18 +114,95 @@
     d.scrollIntoView({ block: 'nearest' });
     return d;
   }
-  function clearFeed() { feed.innerHTML = ''; answerEl = null; }
+  function clearFeed() {
+    liveCharts.forEach(function (c) { try { c.destroy(); } catch (e) {} });
+    liveCharts = []; pendingCharts = [];
+    feed.innerHTML = ''; answerEl = null;
+  }
+  var dark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  // Map an mcp-server-chart tool call to a G2 options object — same spec family
+  // GPT-Vis uses. Unmapped types return null and fall back to the PNG.
+  function specFromTool(tool, a) {
+    var d = a.data;
+    if (!Array.isArray(d) || !d.length) return null;
+    var grouped = d[0] && d[0].group !== undefined;
+    var base = {
+      autoFit: true, animate: false,
+      theme: dark.matches ? 'classicDark' : 'classic',
+      title: a.title ? { title: a.title } : undefined,
+      axis: { x: { title: a.axisXTitle || false }, y: { title: a.axisYTitle || false } },
+    };
+    switch (tool) {
+      case 'generate_line_chart':
+      case 'generate_area_chart':
+        return Object.assign(base, {
+          type: tool === 'generate_line_chart' ? 'line' : 'area',
+          data: d,
+          encode: grouped ? { x: 'time', y: 'value', color: 'group' } : { x: 'time', y: 'value' },
+          style: tool === 'generate_line_chart' ? { lineWidth: 2 } : { fillOpacity: 0.5 },
+        });
+      case 'generate_column_chart':
+        return Object.assign(base, {
+          type: 'interval', data: d,
+          encode: grouped ? { x: 'category', y: 'value', color: 'group' } : { x: 'category', y: 'value' },
+          transform: grouped ? [{ type: a.stack ? 'stackY' : 'dodgeX' }] : undefined,
+          style: grouped ? undefined : { fill: '#0e6b4e', radiusTopLeft: 4, radiusTopRight: 4 },
+        });
+      case 'generate_bar_chart':
+        return Object.assign(base, {
+          type: 'interval', data: d,
+          coordinate: { transform: [{ type: 'transpose' }] },
+          encode: grouped ? { x: 'category', y: 'value', color: 'group' } : { x: 'category', y: 'value' },
+          style: grouped ? undefined : { fill: '#0e6b4e' },
+        });
+      case 'generate_pie_chart':
+        return Object.assign(base, {
+          type: 'interval', data: d,
+          coordinate: { type: 'theta', innerRadius: a.innerRadius || 0 },
+          transform: [{ type: 'stackY' }],
+          encode: { y: 'value', color: 'category' },
+          legend: { color: { position: 'bottom' } },
+          axis: undefined,
+          labels: [{ text: 'category', position: 'outside', fontSize: 12 }],
+        });
+      case 'generate_scatter_chart':
+        return Object.assign(base, {
+          type: 'point', data: d, encode: { x: 'x', y: 'y' }, style: { fill: '#0e6b4e', fillOpacity: 0.7 },
+        });
+      default:
+        return null;
+    }
+  }
 
   function handle(msg) {
     if (msg.type === 'status') ev('status', esc(msg.message));
     else if (msg.type === 'error') ev('error', esc(msg.message));
     else if (msg.type === 'tool_call') {
-      var pretty = msg.args; try { pretty = JSON.stringify(JSON.parse(msg.args), null, 1); } catch (e) {}
+      var args = null; try { args = JSON.parse(msg.args); } catch (e) {}
+      var pretty = args ? JSON.stringify(args, null, 1) : msg.args;
       ev('tool', '<span class="t">⚙ ' + esc(msg.tool) + '</span><details><summary>arguments</summary><pre>' + esc(pretty) + '</pre></details>');
+      var entry = { tool: msg.tool, live: false, card: null };
+      var spec = window.G2 && args ? specFromTool(msg.tool, args) : null;
+      if (spec) {
+        var card = ev('chart', '<div class="live"></div><div class="cap">' + esc(msg.tool) + ' — rendered live in your browser (hover it) · <span class="png">PNG: rendering…</span></div>');
+        try {
+          var chart = new G2.Chart({ container: card.querySelector('.live'), autoFit: true });
+          chart.options(spec);
+          chart.render();
+          liveCharts.push(chart);
+          entry.live = true; entry.card = card;
+        } catch (e) { card.remove(); entry.live = false; }
+      }
+      pendingCharts.push(entry);
       answerEl = null;
     } else if (msg.type === 'tool_result') {
-      if (/^https?:\S+\.(png|jpe?g|svg|webp)\b/i.test(msg.content)) {
-        ev('chart', '<img src="' + esc(msg.content) + '" alt="chart from ' + esc(msg.tool) + '"><div class="cap">' + esc(msg.tool) + ' → ' + esc(msg.content) + '</div>');
+      var pend = pendingCharts.shift();
+      var isImage = /^https?:\S+\.(png|jpe?g|svg|webp)\b/i.test(msg.content);
+      if (pend && pend.live && isImage) {
+        pend.card.querySelector('.png').innerHTML = '<a href="' + esc(msg.content) + '" target="_blank">PNG for export ↗</a>';
+      } else if (isImage) {
+        ev('chart', '<img src="' + esc(msg.content) + '" alt="chart from ' + esc(msg.tool) + '"><div class="cap">' + esc(msg.tool) + ' → <a href="' + esc(msg.content) + '" target="_blank">' + esc(msg.content) + '</a></div>');
       } else {
         ev('status', '← ' + esc(msg.tool) + ': ' + esc(msg.content));
       }

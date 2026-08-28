@@ -43,6 +43,15 @@ async def sample(request):
     return FileResponse(core.ROOT / "data/monthly_transactions.csv", media_type="text/csv")
 
 
+async def g2js(request):
+    # Serve G2 from node_modules: no CDN dependency, works offline/air-gapped,
+    # and the browser engine version always matches the server-side renderer's.
+    path = core.ROOT / "node_modules/@antv/g2/dist/g2.min.js"
+    if not path.exists():
+        return JSONResponse({"error": "run npm install first"}, status_code=404)
+    return FileResponse(path, media_type="text/javascript")
+
+
 async def health(request):
     needs_key = core.MODEL.startswith("openrouter:")
     return JSONResponse({
@@ -82,7 +91,7 @@ def build_agent(model_str: str):
     if model_str == "test":
         from pydantic_ai.models.test import TestModel
 
-        model = TestModel(call_tools=["generate_column_chart"])
+        model = TestModel(call_tools=["generate_column_chart", "generate_line_chart"])
     else:
         model = model_str
     return Agent(model, instructions=core.INSTRUCTIONS, toolsets=[MCPToolset(core.make_transport())])
@@ -155,6 +164,7 @@ app = Starlette(
     routes=[
         Route("/", index),
         Route("/api/sample", sample),
+        Route("/vendor/g2.min.js", g2js),
         Route("/api/health", health),
         Route("/api/check", check, methods=["POST"]),
         Route("/api/run", run, methods=["POST"]),

@@ -47,7 +47,11 @@ agent/.venv/bin/python agent/web.py     # → open http://127.0.0.1:8300
 
 Paste or upload any CSV, ask a question, hit **Run agent**, and watch the live
 feed: the model's text streams in, every MCP tool call appears with its
-arguments, and each chart shows up the moment the local renderer produces it.
+arguments, and each chart renders **live and interactive in the page** (hover
+for tooltips) the moment its tool call streams in — the same G2 engine GPT-Vis
+uses, served from local `node_modules` (no CDN, works offline). The PNG from
+the private renderer stays available as an export link; chart types without a
+live mapping (line, area, column, bar, pie, scatter have one) fall back to it.
 **Check MCP wiring** works with no API key; typing `test` as the model runs the
 loop with a stub LLM (MCP calls and rendering still real). No extra Python
 deps — the UI runs on starlette/uvicorn, which pydantic-ai already installs.
