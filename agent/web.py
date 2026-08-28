@@ -132,7 +132,8 @@ async def run(request):
                             args = ev.part.args
                             if not isinstance(args, str):
                                 args = json.dumps(args, ensure_ascii=False)
-                            yield line({"type": "tool_call", "tool": ev.part.tool_name, "args": args[:4000]})
+                            # full args — the UI renders the chart from them; it truncates for display itself
+                            yield line({"type": "tool_call", "tool": ev.part.tool_name, "args": args[:200_000]})
                         elif kind == "FunctionToolResultEvent":
                             yield line({"type": "tool_result", "tool": ev.part.tool_name, "content": str(ev.part.content)[:600]})
                         elif kind == "PartStartEvent" and getattr(ev.part, "part_kind", "") == "text":

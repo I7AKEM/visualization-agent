@@ -102,7 +102,7 @@
     $('model').value = h.model;
     $('health').innerHTML = 'model: <b>' + esc(h.model) + '</b> · API key: ' + (h.has_key ? '<b>found</b>' : 'missing (set OPENROUTER_API_KEY, or use model "test")') +
       ' · MCP server: ' + (h.mcp_server ? '<b>installed</b>' : 'missing — run npm install') +
-      ' · live charts: ' + (window.G2 ? '<b>on</b> (G2 in browser)' : 'off — CDN unreachable, PNG fallback');
+      ' · live charts: ' + (window.G2 ? '<b>on</b> (G2 in browser)' : '<b>off</b> — restart agent/web.py after git pull (G2 not served)') + ' · UI v3';
   }).catch(function () { $('health').textContent = 'server unreachable'; });
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
@@ -181,6 +181,7 @@
     else if (msg.type === 'tool_call') {
       var args = null; try { args = JSON.parse(msg.args); } catch (e) {}
       var pretty = args ? JSON.stringify(args, null, 1) : msg.args;
+      if (pretty.length > 4000) pretty = pretty.slice(0, 4000) + '\n… (truncated for display — full args were used for the chart)';
       ev('tool', '<span class="t">⚙ ' + esc(msg.tool) + '</span><details><summary>arguments</summary><pre>' + esc(pretty) + '</pre></details>');
       var entry = { tool: msg.tool, live: false, card: null };
       var spec = window.G2 && args ? specFromTool(msg.tool, args) : null;
