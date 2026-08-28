@@ -31,7 +31,21 @@ Real MCP handshake, real tool call, real local render; only the LLM is absent:
 agent/.venv/bin/python agent/main.py --check
 ```
 
-## Run it for real
+## Web UI — watch the agent live
+
+```sh
+export OPENROUTER_API_KEY=sk-or-...
+agent/.venv/bin/python agent/web.py     # → open http://127.0.0.1:8300
+```
+
+Paste or upload any CSV, ask a question, hit **Run agent**, and watch the live
+feed: the model's text streams in, every MCP tool call appears with its
+arguments, and each chart shows up the moment the local renderer produces it.
+**Check MCP wiring** works with no API key; typing `test` as the model runs the
+loop with a stub LLM (MCP calls and rendering still real). No extra Python
+deps — the UI runs on starlette/uvicorn, which pydantic-ai already installs.
+
+## Run it for real (CLI)
 
 ```sh
 export OPENROUTER_API_KEY=sk-or-...          # openrouter.ai/keys

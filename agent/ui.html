@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insightor Agent — live MCP run</title>
+<style>
+  :root {
+    --paper:#f6f8f7; --card:#ffffff; --ink:#1c2b26; --ink-2:#52645d; --ink-3:#7d8c86;
+    --line:#dde4e1; --accent:#0e6b4e; --accent-ink:#0a5540; --accent-soft:#e2efe9;
+    --warn:#9a5b12; --warn-soft:#f8ecd9; --err:#a3272f; --err-soft:#f9e5e4; --code-bg:#eef2f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper:#111917; --card:#18231f; --ink:#e4ebe8; --ink-2:#9fb0a9; --ink-3:#71827b;
+      --line:#2a3833; --accent:#4cc39a; --accent-ink:#6ed3ae; --accent-soft:#1b2f28;
+      --warn:#e0a55c; --warn-soft:#2b2118; --err:#e08f8a; --err-soft:#33201f; --code-bg:#1f2c27; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 system-ui,"Segoe UI",sans-serif; }
+  .wrap { max-width:1080px; margin:0 auto; padding:28px 18px 70px; }
+  h1 { font-size:1.35rem; margin:0 0 2px; }
+  .sub { color:var(--ink-2); margin:0 0 4px; font-size:.92rem; }
+  .health { font-size:.78rem; color:var(--ink-3); margin-bottom:16px; }
+  .health b { color:var(--accent-ink); }
+  .grid { display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:14px; align-items:start; }
+  @media (max-width:900px){ .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  label { display:block; font-size:.7rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); font-weight:600; margin:10px 0 4px; }
+  label:first-child { margin-top:0; }
+  textarea { width:100%; min-height:170px; resize:vertical; direction:ltr; background:var(--code-bg); color:var(--ink);
+    border:1px solid var(--line); border-radius:8px; padding:9px 11px; font:12px/1.5 ui-monospace,monospace; }
+  input[type=text] { width:100%; background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font:inherit; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center; }
+  button { font:inherit; font-weight:600; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:8px 15px; cursor:pointer; }
+  button:hover { border-color:var(--accent); color:var(--accent-ink); }
+  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  button.primary:hover { filter:brightness(1.08); color:#fff; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  input:focus, textarea:focus, button:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .hint { font-size:.76rem; color:var(--ink-3); }
+
+  #feed { display:flex; flex-direction:column; gap:8px; min-height:220px; }
+  .ev { border:1px solid var(--line); border-radius:8px; padding:8px 12px; font-size:.86rem; background:var(--card); }
+  .ev.status { color:var(--ink-3); border-style:dashed; }
+  .ev.error { background:var(--err-soft); color:var(--err); border-color:transparent; }
+  .ev.tool { background:var(--accent-soft); border-color:transparent; }
+  .ev.tool .t { color:var(--accent-ink); font-weight:600; font-family:ui-monospace,monospace; font-size:.8rem; }
+  .ev.tool pre { margin:6px 0 0; max-height:140px; overflow:auto; background:var(--code-bg); border-radius:6px; padding:7px 9px; font-size:.72rem; white-space:pre-wrap; word-break:break-all; }
+  .ev.answer { font-size:.98rem; line-height:1.75; white-space:pre-wrap; }
+  .ev.answer.streaming::after { content:"▍"; color:var(--accent); }
+  .ev.chart img { max-width:100%; border-radius:6px; display:block; background:#fff; }
+  .ev.chart .cap { font-size:.74rem; color:var(--ink-3); margin-top:5px; font-family:ui-monospace,monospace; word-break:break-all; }
+  details summary { cursor:pointer; font-size:.76rem; color:var(--ink-2); }
+  .usage { font-family:ui-monospace,monospace; font-size:.76rem; color:var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Insightor Agent — live MCP run</h1>
+  <p class="sub">Paste a CSV and a question. A real LLM decides, calls the real <code>@antv/mcp-server-chart</code> over MCP, and charts render locally. Watch every step below.</p>
+  <div class="health" id="health">checking server…</div>
+
+  <div class="grid">
+    <div class="card">
+      <label for="csv">CSV — SQL result</label>
+      <textarea id="csv" spellcheck="false" placeholder="month,region,transactions&#10;2025-01,الرياض,42100&#10;…"></textarea>
+      <div class="row" style="margin-top:6px">
+        <input type="file" id="file" accept=".csv,.tsv,.txt" style="font-size:.78rem">
+        <button id="loadSample" type="button">Load Arabic sample</button>
+      </div>
+      <label for="q">Question · السؤال</label>
+      <input type="text" id="q" dir="auto" value="أي المناطق سجلت أعلى نمو في المعاملات خلال 2025؟ وما حجم الفارق؟">
+      <label for="model">Model (pydantic-ai string)</label>
+      <input type="text" id="model" spellcheck="false">
+      <div class="row">
+        <button class="primary" id="run" type="button">Run agent</button>
+        <button id="stop" type="button" disabled>Stop</button>
+        <button id="checkBtn" type="button">Check MCP wiring (no key)</button>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Type <b>test</b> as the model to watch the loop with a stub LLM — the MCP calls and rendering are still real.</p>
+    </div>
+
+    <div class="card">
+      <label>Agent activity</label>
+      <div id="feed"><div class="ev status">idle — run the agent or check the wiring</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var feed = $('feed'), controller = null, answerEl = null;
+
+  fetch('/api/health').then(function (r) { return r.json(); }).then(function (h) {
+    $('model').value = h.model;
+    $('health').innerHTML = 'model: <b>' + esc(h.model) + '</b> · API key: ' + (h.has_key ? '<b>found</b>' : 'missing (set OPENROUTER_API_KEY, or use model "test")') +
+      ' · MCP server: ' + (h.mcp_server ? '<b>installed</b>' : 'missing — run npm install');
+  }).catch(function () { $('health').textContent = 'server unreachable'; });
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+  function ev(cls, html) {
+    var d = document.createElement('div');
+    d.className = 'ev ' + cls;
+    d.innerHTML = html;
+    feed.appendChild(d);
+    d.scrollIntoView({ block: 'nearest' });
+    return d;
+  }
+  function clearFeed() { feed.innerHTML = ''; answerEl = null; }
+
+  function handle(msg) {
+    if (msg.type === 'status') ev('status', esc(msg.message));
+    else if (msg.type === 'error') ev('error', esc(msg.message));
+    else if (msg.type === 'tool_call') {
+      var pretty = msg.args; try { pretty = JSON.stringify(JSON.parse(msg.args), null, 1); } catch (e) {}
+      ev('tool', '<span class="t">⚙ ' + esc(msg.tool) + '</span><details><summary>arguments</summary><pre>' + esc(pretty) + '</pre></details>');
+      answerEl = null;
+    } else if (msg.type === 'tool_result') {
+      if (/^https?:\S+\.(png|jpe?g|svg|webp)\b/i.test(msg.content)) {
+        ev('chart', '<img src="' + esc(msg.content) + '" alt="chart from ' + esc(msg.tool) + '"><div class="cap">' + esc(msg.tool) + ' → ' + esc(msg.content) + '</div>');
+      } else {
+        ev('status', '← ' + esc(msg.tool) + ': ' + esc(msg.content));
+      }
+      answerEl = null;
+    } else if (msg.type === 'text') {
+      if (!answerEl) { answerEl = ev('answer streaming', ''); answerEl.dir = 'auto'; }
+      answerEl.textContent += msg.delta;
+      answerEl.scrollIntoView({ block: 'nearest' });
+    } else if (msg.type === 'done') {
+      if (answerEl) answerEl.classList.remove('streaming');
+      ev('status', 'done · <span class="usage">' + msg.input_tokens + ' tokens in / ' + msg.output_tokens + ' out</span>');
+    }
+  }
+
+  async function streamRun() {
+    clearFeed();
+    $('run').disabled = true; $('stop').disabled = false;
+    controller = new AbortController();
+    try {
+      var res = await fetch('/api/run', {
+        method: 'POST', signal: controller.signal,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ csv: $('csv').value, question: $('q').value, model: $('model').value }),
+      });
+      if (!res.ok) { var e = await res.json(); ev('error', esc(e.error || res.statusText)); return; }
+      var reader = res.body.getReader(), dec = new TextDecoder(), buf = '';
+      for (;;) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buf += dec.decode(chunk.value, { stream: true });
+        var i;
+        while ((i = buf.indexOf('\n')) >= 0) {
+          var lineText = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+          if (lineText) handle(JSON.parse(lineText));
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') ev('error', esc(err.message));
+      else ev('status', 'stopped by user');
+    } finally {
+      if (answerEl) answerEl.classList.remove('streaming');
+      $('run').disabled = false; $('stop').disabled = true; controller = null;
+    }
+  }
+
+  $('run').addEventListener('click', function () {
+    if (!$('csv').value.trim()) { $('csv').focus(); return; }
+    streamRun();
+  });
+  $('stop').addEventListener('click', function () { if (controller) controller.abort(); });
+
+  $('checkBtn').addEventListener('click', async function () {
+    clearFeed();
+    ev('status', 'checking MCP wiring — real handshake, real tool call, no LLM…');
+    try {
+      var r = await fetch('/api/check', { method: 'POST' });
+      var d = await r.json();
+      ev('tool', '<span class="t">✓ ' + d.tools + ' tools exposed</span><details><summary>tool names</summary><pre>' + esc(d.names.join('\n')) + '</pre></details>');
+      if (d.sample_chart) ev('chart', '<img src="' + esc(d.sample_chart) + '" alt="wiring check chart"><div class="cap">rendered locally by the private renderer</div>');
+    } catch (err) { ev('error', esc(err.message)); }
+  });
+
+  $('file').addEventListener('change', function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { $('csv').value = String(rd.result); };
+    rd.readAsText(f);
+  });
+  $('loadSample').addEventListener('click', function () {
+    fetch('/api/sample').then(function (r) { return r.text(); }).then(function (t) { $('csv').value = t; });
+  });
+})();
+</script>
+</body>
+</html>
