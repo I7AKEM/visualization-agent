@@ -2,13 +2,14 @@ schema_version: 1
 work_package: WP-00
 base_integration_commit: 4695e98916a760b1548eb862dc86b63d359ce7c8
 delivery_commit: f5d7ca5eb935314b917f61d27a41170ba107a390
+handoff_commit: 29881f5f59b1b3595a4498d73163a41be89afa75
+handoff_state: conditionally_accepted
 changed_paths:
   - docs/adr/ADR-004-deployment-platform-and-region.md
   - docs/adr/ADR-005-authoritative-saudi-boundaries.md
   - docs/adr/ADR-006-governed-semantic-source.md
   - docs/adr/ADR-008-identity-provider-and-policy-ownership.md
   - docs/evidence/wp-00/README.md
-  - docs/evidence/wp-00/handoff.yaml
   - docs/governance/README.md
   - docs/governance/data-classification-acceptance.yaml
   - docs/governance/disabled-features.yaml
@@ -60,7 +61,7 @@ commands_run:
     result: PASS handoff required keys.
 tests_not_run:
   - Organization owner/reviewer/on-call approvals were not available; the packet remains input_required and production is disabled.
-  - Integration-owner acceptance and green CI for the exact delivery commit require the integration task and CI environment.
+  - Green CI does not exist before WP-01; the documented WP-00 bootstrap exception uses local deterministic integration checks and is not production CI evidence.
   - Runtime, provider, infrastructure, performance, security, and agent-eval suites are not applicable to this documentation-only work package and are not claimed.
 eval_manifest_versions: []
 migrations: []
@@ -83,10 +84,11 @@ disabled_features:
   - DF-013
 known_risks:
   - The WP-00 exit criterion requiring an approved governance packet is not met because organization inputs, named owners, reviewers, and on-call assignments are absent.
-  - The normative docs/production-spec/** package and PRODUCTION_PLAN.md were present but untracked at task start and are not part of the WP-00 delivery commit; the integration owner must place the normative sources in an accepted integration commit before accepting dependency evidence.
-  - The handoff schema requires a handoff embedded in a Git commit to contain that same commit SHA and match task HEAD. A Git commit cannot contain its own hash without circularity. This handoff names the substantive delivery commit and is committed as metadata immediately afterward; integration tooling must formalize a non-self-referential convention.
+  - Conditional integration acceptance authorizes only owner-independent WP-01 foundation work after a named WP-01 owner and reviewer are assigned; it is not full WP-00 completion or production approval.
+  - Green CI, runtime, provider, infrastructure, performance, security, and agent-eval evidence remain unavailable and unclaimed.
 rollback_steps:
-  - Revert the handoff metadata commit if present.
+  - Revert the integration acceptance commit that annotates this handoff and adds docs/evidence/integration/wp-00-acceptance.yaml.
+  - Revert specification commit d19f11e3644da73e245e928c462d45b4910e2469 if the normative package must be withdrawn.
   - Revert delivery commit f5d7ca5eb935314b917f61d27a41170ba107a390; no runtime, migration, configuration, secret, or persisted-data rollback is required.
 critical_gates_passed:
   - WP00-YAML-PARSE

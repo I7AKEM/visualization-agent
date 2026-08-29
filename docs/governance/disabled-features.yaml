@@ -76,9 +76,9 @@ features:
     required_behavior: Configuration validation rejects higher values without linked performance/security evidence and acceptance.
     enablement_evidence: Versioned load/security results plus approved limit change.
   - id: DF-013
-    capability: work_package_acceptance_and_integration_merge
+    capability: full_work_package_acceptance_and_integration_merge
     status: disabled
     blockers: [OI-015]
-    required_behavior: An integration owner must not accept or merge a work package without named owner/reviewer and its evidence packet.
+    required_behavior: No package receives full acceptance or production authority without named owners/reviewers and its evidence packet. The documented WP-00 bootstrap exception may conditionally satisfy only the dependency for owner-independent WP-01 scaffolding; WP-01 still cannot start until its owner/reviewer are assigned.
     enablement_evidence: Named assignments and integration-owner acceptance record.
 scope_note: These controls govern the future production implementation. The preserved POC remains local research and is not converted into a partially enabled production service by WP-00.

@@ -1,0 +1,149 @@
+schema_version: 1
+record_type: integration_acceptance
+work_package: WP-00
+status: conditionally_accepted
+decision_date: '2026-08-29'
+acceptance_base_commit: d19f11e3644da73e245e928c462d45b4910e2469
+delivery_commit: f5d7ca5eb935314b917f61d27a41170ba107a390
+handoff_commit: 29881f5f59b1b3595a4498d73163a41be89afa75
+specification_commit: d19f11e3644da73e245e928c462d45b4910e2469
+production_approved: false
+acceptance_scope:
+  dependency_status: conditionally_satisfied
+  allowed:
+    - Owner-independent WP-01 monorepo, dependency-lock, compatibility-test, and CI scaffolding after a named WP-01 owner and reviewer are assigned.
+  blocked:
+    - WP-01 dispatch before its named owner and reviewer are assigned under OI-015.
+    - Production deployment, traffic, authentication, persistence, uploads, background jobs, external model routes, maps, governed connectors, publication, sharing, export, purge, beta enrollment, and production SLO claims.
+    - Any interpretation of this record as full WP-00 completion, organization approval, security approval, or production release evidence.
+unresolved_owner_inputs:
+  - OI-001
+  - OI-002
+  - OI-003
+  - OI-004
+  - OI-005
+  - OI-006
+  - OI-007
+  - OI-008
+  - OI-009
+  - OI-010
+  - OI-011
+  - OI-012
+  - OI-013
+  - OI-014
+  - OI-015
+  - OI-016
+disabled_features:
+  - DF-001
+  - DF-002
+  - DF-003
+  - DF-004
+  - DF-005
+  - DF-006
+  - DF-007
+  - DF-008
+  - DF-009
+  - DF-010
+  - DF-011
+  - DF-012
+  - DF-013
+conditions:
+  - Assign and record the WP-01 owner and reviewer before dispatch; resolving OI-015 for WP-01 does not resolve unrelated package ownership.
+  - Preserve every disabled feature until all of its blocker IDs have approved owner evidence and the owning future work package passes its gates.
+  - Treat the local WP-00 bootstrap checks as documentation/governance evidence only; WP-01 must create CI and later packages must supply green CI for their exact accepted artifacts.
+  - Do not use the preserved POC runtime, mutable out directory, or public rendering paths as production implementation or evidence.
+poc_preservation:
+  tracked_submission_diff: none
+  runtime_worktree_blobs_at_integration_start_and_acceptance:
+    agent/fast_track.py: 93e8d989c0c6ece65877d20e70b90bb7f08de1f0
+    agent/main.py: 02b7d55bc63d512057c9cf267516c90fe9746025
+  out_snapshot_at_integration_start_and_acceptance:
+    file_count: 73
+    path_and_content_manifest_sha256: fa47dd4c6511e9fd4186780836b8d618a84e3ff482189d216224d79e990f414e
+  note: The runtime files and out snapshot remain user-owned and are not included in either integration-owned commit.
+validation:
+  - id: SPEC-MARKDOWN-LINKS
+    evaluated_commit: d19f11e3644da73e245e928c462d45b4910e2469
+    command: >-
+      ruby -e 'files=["PRODUCTION_PLAN.md"]+Dir["docs/production-spec/*.md"].sort; missing=[]; files.each{|f| File.read(f).scan(/\[[^\]]*\]\(([^)]+)\)/).flatten.each{|target| next if target =~ %r{\A(?:https?://|mailto:|#)}; path=target.split("#",2).first; next if path.empty?; resolved=File.expand_path(path,File.dirname(f)); missing << "#{f}: #{target}" unless File.exist?(resolved)}}; abort "missing markdown targets:\n#{missing.join("\n")}" unless missing.empty?; puts "PASS #{files.length} markdown files; all relative link targets exist"'
+    exit_code: 0
+    result: PASS 8 markdown files; all relative link targets exist.
+    result_artifact: inline
+  - id: SPEC-COMMIT-CONTENTS
+    evaluated_commit: d19f11e3644da73e245e928c462d45b4910e2469
+    command: >-
+      for p in PRODUCTION_PLAN.md docs/production-spec/README.md docs/production-spec/01_DECISIONS_AND_ARCHITECTURE.md docs/production-spec/02_CONTRACTS_AND_STATE_MACHINES.md docs/production-spec/03_TEST_AND_FAILURE_MATRIX.md docs/production-spec/04_AGENT_EVAL_SPEC.md docs/production-spec/05_SECURITY_OPERATIONS_AND_DELIVERY.md docs/production-spec/06_TASK_DISPATCH_BRIEFS.md; do git cat-file -e "d19f11e3644da73e245e928c462d45b4910e2469:$p"; done
+    exit_code: 0
+    result: PASS all 8 normative files exist in the specification commit.
+    result_artifact: git_objects
+  - id: WP00-YAML-PARSE-AND-REFERENCES
+    evaluated_commit: working_tree_before_acceptance_commit
+    command: >-
+      ruby -e 'require "yaml"; files=Dir["docs/governance/*.yaml"].sort+["docs/evidence/wp-00/handoff.yaml","docs/evidence/integration/wp-00-acceptance.yaml"]; docs=files.to_h{|f| [f,YAML.load_file(f)]}; owner_rows=docs.fetch("docs/governance/owner-input-checklist.yaml").fetch("inputs"); owners=owner_rows.map{|x| x.fetch("id")}; features=docs.fetch("docs/governance/disabled-features.yaml").fetch("features"); blockers=features.flat_map{|x| x.fetch("blockers")}.uniq; reqs=docs.fetch("docs/governance/requirements-traceability.yaml").fetch("requirements"); refs=docs.fetch("docs/governance/governance-packet.yaml").values_at("records","adrs","evidence").flatten; raise "unknown blocker" unless (blockers-owners).empty?; raise "owner state" unless owner_rows.all?{|x| x.fetch("status")=="input_required" && x["owner"].nil? && x["reviewer"].nil?}; raise "feature state" unless features.all?{|x| x.fetch("status")=="disabled"}; raise "missing packet ref" unless refs.all?{|p| File.exist?(p)}; raise "missing requirement evidence" unless reqs.flat_map{|x| x.fetch("evidence")}.all?{|p| File.exist?(p)}; h=docs.fetch("docs/evidence/wp-00/handoff.yaml"); a=docs.fetch("docs/evidence/integration/wp-00-acceptance.yaml"); raise "requirement mismatch" unless h.fetch("requirements").sort==reqs.map{|x|x.fetch("id")}.sort; raise "disabled mismatch" unless h.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort; raise "owner mismatch" unless a.fetch("unresolved_owner_inputs").sort==owners.sort; raise "acceptance disabled mismatch" unless a.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort; raise "production approval" unless a.fetch("production_approved")==false; puts "PASS #{files.length} YAML files, #{owners.length} unresolved owner inputs, #{features.length} disabled features, #{reqs.length} requirements"'
+    exit_code: 0
+    result: PASS 12 YAML files, 16 unresolved owner inputs, 13 disabled features, 14 requirements.
+    result_artifact: inline
+  - id: WP00-GIT-ANCESTRY
+    evaluated_commit: 29881f5f59b1b3595a4498d73163a41be89afa75
+    command: >-
+      git merge-base --is-ancestor 4695e98916a760b1548eb862dc86b63d359ce7c8 f5d7ca5eb935314b917f61d27a41170ba107a390 && test "$(git rev-parse 29881f5f59b1b3595a4498d73163a41be89afa75^)" = f5d7ca5eb935314b917f61d27a41170ba107a390
+    exit_code: 0
+    result: PASS base is an ancestor of delivery and handoff is the direct child of delivery.
+    result_artifact: git_graph
+  - id: WP00-EVIDENCE-CONTRACT
+    evaluated_commit: working_tree_before_acceptance_commit
+    command: >-
+      ruby -e 'require "yaml"; h=YAML.load_file("docs/evidence/wp-00/handoff.yaml"); a=YAML.load_file("docs/evidence/integration/wp-00-acceptance.yaml"); hr=%w[schema_version work_package base_integration_commit delivery_commit handoff_commit handoff_state changed_paths requirements dependency_commits commands_run tests_not_run eval_manifest_versions migrations configuration_keys secret_names telemetry_changes disabled_features known_risks rollback_steps critical_gates_passed reviewers_required]; ar=%w[schema_version record_type work_package status acceptance_base_commit delivery_commit handoff_commit specification_commit acceptance_scope validation unresolved_owner_inputs disabled_features conditions rollback_steps dependent_task_base_rule]; sha=/\A[0-9a-f]{40}\z/; raise "handoff keys" unless (hr-h.keys).empty?; raise "acceptance keys" unless (ar-a.keys).empty?; raise "handoff sha" unless %w[base_integration_commit delivery_commit handoff_commit].all?{|k| h.fetch(k).match?(sha)}; raise "acceptance sha" unless %w[acceptance_base_commit delivery_commit handoff_commit specification_commit].all?{|k| a.fetch(k).match?(sha)}; raise "state" unless h.fetch("handoff_state")=="conditionally_accepted" && a.fetch("status")=="conditionally_accepted"; raise "anchor mismatch" unless h.fetch("delivery_commit")==a.fetch("delivery_commit") && h.fetch("handoff_commit")==a.fetch("handoff_commit"); raise "self path" if h.fetch("changed_paths").include?("docs/evidence/wp-00/handoff.yaml"); puts "PASS handoff and acceptance required keys, states, hashes, and anchors"'
+    exit_code: 0
+    result: PASS handoff and acceptance required keys, states, hashes, and anchors.
+    result_artifact: inline
+  - id: WP00-OWNED-PATH-SCOPE
+    evaluated_commit: f5d7ca5eb935314b917f61d27a41170ba107a390
+    command: >-
+      ruby -e 'require "yaml"; h=YAML.load_file("docs/evidence/wp-00/handoff.yaml"); actual=IO.popen(["git","diff","--name-only","4695e98916a760b1548eb862dc86b63d359ce7c8","f5d7ca5eb935314b917f61d27a41170ba107a390"], &:read).lines(chomp:true); metadata=IO.popen(["git","diff","--name-only","f5d7ca5eb935314b917f61d27a41170ba107a390","29881f5f59b1b3595a4498d73163a41be89afa75"], &:read).lines(chomp:true); raise "changed_paths mismatch" unless h.fetch("changed_paths")==actual; raise "delivery ownership" unless actual.length==16 && actual.all?{|p| p.match?(%r{\Adocs/(?:adr|governance|evidence/wp-00)/})}; raise "handoff scope" unless metadata==["docs/evidence/wp-00/handoff.yaml"]; puts "PASS #{actual.length} delivery paths and #{metadata.length} handoff-only path"'
+    exit_code: 0
+    result: PASS 16 delivery paths and 1 handoff-only path.
+    result_artifact: git_diff
+  - id: WP00-POC-RUNTIME-PRESERVATION
+    evaluated_commit: 29881f5f59b1b3595a4498d73163a41be89afa75
+    command: >-
+      git diff --quiet 4695e98916a760b1548eb862dc86b63d359ce7c8 29881f5f59b1b3595a4498d73163a41be89afa75 -- agent demos ui out data fonts package.json package-lock.json
+    exit_code: 0
+    result: PASS submitted WP-00 commits do not change tracked POC/runtime/output paths.
+    result_artifact: git_diff
+  - id: WORKTREE-RUNTIME-PRESERVATION
+    evaluated_commit: working_tree_before_acceptance_commit
+    command: >-
+      test "$(git hash-object agent/fast_track.py)" = 93e8d989c0c6ece65877d20e70b90bb7f08de1f0 && test "$(git hash-object agent/main.py)" = 02b7d55bc63d512057c9cf267516c90fe9746025
+    exit_code: 0
+    result: PASS both user-owned runtime files match their integration-start blobs.
+    result_artifact: git_blob_hashes
+  - id: WORKTREE-OUT-PRESERVATION
+    evaluated_commit: working_tree_before_acceptance_commit
+    command: >-
+      test "$(find out -type f | wc -l | tr -d " ")" = 73 && test "$(find out -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256 | shasum -a 256 | awk "{print \$1}")" = fa47dd4c6511e9fd4186780836b8d618a84e3ff482189d216224d79e990f414e
+    exit_code: 0
+    result: PASS all 73 out files match the integration-start path/content manifest.
+    result_artifact: path_and_content_manifest_sha256
+  - id: DOCUMENTATION-WHITESPACE
+    evaluated_commit: working_tree_before_acceptance_commit
+    command: git diff --check 4695e98916a760b1548eb862dc86b63d359ce7c8
+    exit_code: 0
+    result: PASS no whitespace errors from the WP-00 base through integration evidence.
+    result_artifact: git_diff
+tests_not_run:
+  - No organization owner, reviewer, on-call, security, privacy, product, data-domain, or operations approval was available.
+  - No green CI exists before WP-01; this uses the sole documented WP-00 bootstrap exception.
+  - Runtime, provider, infrastructure, performance, security, and agent-eval suites are not applicable to this documentation-only acceptance and are not claimed.
+reviewers_required:
+  - engineering_owner
+  - product_owner
+  - security_reviewer
+  - data_domain_reviewer
+  - legal_privacy_reviewer
+  - operations_owner
+rollback_steps:
+  - Revert the commit that first adds this acceptance record; its hash is intentionally resolved externally rather than self-recorded.
+  - Revert specification commit d19f11e3644da73e245e928c462d45b4910e2469 if the normative package must be withdrawn.
+  - Revert handoff commit 29881f5f59b1b3595a4498d73163a41be89afa75 and delivery commit f5d7ca5eb935314b917f61d27a41170ba107a390 if the WP-00 packet must be withdrawn.
+dependent_task_base_rule: acceptance_record_introduction_commit

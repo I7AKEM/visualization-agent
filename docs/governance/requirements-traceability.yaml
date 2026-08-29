@@ -76,7 +76,7 @@ requirements:
     verification: adr_and_disable_register_consistency
     future_test_owner: WP-03
   - id: GOV-013
-    statement: Every work package handoff carries exact paths, commands/results, risks, disabled features, rollback, and required reviewers.
+    statement: Every work package handoff separates its substantive delivery commit from its handoff-only commit and carries exact paths, commands/results, risks, disabled features, rollback, and required reviewers.
     sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#11, 06_TASK_DISPATCH_BRIEFS.md#5]
     evidence: [docs/evidence/wp-00/handoff.yaml]
     verification: handoff_required_key_and_type_validation
