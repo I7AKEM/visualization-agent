@@ -1,0 +1,103 @@
+schema_version: 1
+record_type: execution_authorization
+record_id: EA-001
+status: active
+authorized_by: user
+recorded_by: VA Integration Owner
+effective_date: '2026-08-29'
+scope:
+  applies_to:
+    - Integration coordination for the Production Visualization Agent.
+    - Every new WP-01 through WP-14 work-package task prompt.
+    - The active WP-01 task identified below.
+  pre_authorized_without_redundant_confirmation:
+    - dependency_metadata_and_downloads
+    - repository_local_toolchains_and_virtual_environments
+    - lock_generation
+    - tests_builds_linters_security_and_sbom_scans
+    - isolated_git_worktrees
+    - non_destructive_commits
+    - fast_forward_integration
+    - temporary_files
+  excluded_and_still_blocking:
+    - deletion
+    - destructive_git
+    - global_or_system_changes
+    - secrets_or_credentials
+    - paid_services_or_billable_model_calls
+    - external_communication
+    - deployment
+    - production_access_or_data
+    - privilege_expansion
+    - organization_decisions
+    - weakening_gates
+operating_rules:
+  - Work inside the pre-authorized scope may continue without another user-intent confirmation.
+  - This record does not bypass host, sandbox, or tool-enforced approval controls; satisfy any such control without treating it as authority for an excluded action.
+  - Split mixed operations so the pre-authorized portion may proceed while the excluded portion remains blocked.
+  - Stop before an excluded action unless the user later gives new explicit authorization for that exact action.
+  - Preserve unrelated user changes, the POC, every unresolved owner input, and every disabled production capability.
+  - Record exact commands, versions or digests, exit codes, factual results, skipped gates, and reasons in the work-package handoff evidence.
+  - Never infer organization approval, production approval, a secret value, or permission to weaken a gate from this record.
+dispatch_application:
+  canonical_prompt: docs/production-spec/06_TASK_DISPATCH_BRIEFS.md#2-canonical-fresh-context-prompt
+  prompt_rule: Every new work-package task prompt must contain the complete pre-authorized and excluded scopes; a reference alone is insufficient.
+  active_task:
+    work_package: WP-01
+    task_name: VA WP-01 Foundation
+    thread_id: 01a04e86-6467-72c1-9502-6569ab95cd13
+    assignment: docs/evidence/integration/wp-01-assignment.yaml
+  integration_owner:
+    task_name: VA Integration Owner
+    thread_id: 01a04e73-e0c0-7502-82dc-5eac4729e7fe
+local_runtime_gate:
+  gate_id: LOCAL-RUNTIME
+  status: enforced_for_owned_runnable_behavior
+  normative_rules:
+    - docs/production-spec/03_TEST_AND_FAILURE_MATRIX.md#11-cross-cutting-local-runtime-acceptance-gate
+    - docs/production-spec/06_TASK_DISPATCH_BRIEFS.md#41-local-runtime-integration-rule
+  required_evidence:
+    - frozen_lock_local_start_commands
+    - health_and_readiness_results
+    - graceful_shutdown_results
+    - offline_agent_api_request_response_and_stream_event_traces
+    - wp_05_and_later_real_ui_playwright_and_browser_or_computer_use_artifacts
+    - dataset_result_and_artifact_hashes
+    - failures_and_retests
+  live_paid_provider_authorized: false
+  production_access_or_data_authorized: false
+acceptance_limits:
+  organization_approval: false
+  production_approved: false
+  owner_input_resolutions: []
+unresolved_owner_inputs:
+  - OI-001
+  - OI-002
+  - OI-003
+  - OI-004
+  - OI-005
+  - OI-006
+  - OI-007
+  - OI-008
+  - OI-009
+  - OI-010
+  - OI-011
+  - OI-012
+  - OI-013
+  - OI-014
+  - OI-015
+  - OI-016
+disabled_features:
+  - DF-001
+  - DF-002
+  - DF-003
+  - DF-004
+  - DF-005
+  - DF-006
+  - DF-007
+  - DF-008
+  - DF-009
+  - DF-010
+  - DF-011
+  - DF-012
+  - DF-013

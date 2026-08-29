@@ -26,6 +26,22 @@ assignment_scope:
     - WP-01 product feature implementation.
     - Any owner-dependent or production capability.
     - Any assignment or acceptance implication for WP-00 or WP-02 through WP-14.
+execution_authorization:
+  record: docs/evidence/integration/execution-authorization.yaml
+  status: active
+  applies_to: WP-01 implementation, validation, evidence, and non-destructive handoff preparation.
+  prompt_delivery_requirement: The active task must receive the complete pre-authorized and excluded scopes; a reference alone is insufficient.
+  production_approved: false
+local_runtime_acceptance:
+  gate: LOCAL-RUNTIME
+  status: required_for_owned_runnable_behavior
+  minimum_wp_01_evidence:
+    - Start each runnable API, worker, and web scaffold locally from frozen Python and Node locks.
+    - Record health/readiness, dependency-failure, and graceful-shutdown results for each runnable scaffold.
+    - Record every progressive agent API/stream or UI subgate as passed, failed, or not_applicable with an exact ownership/dependency rationale.
+    - Store exact commands, logs, traces, artifact hashes, failures, and retest results under docs/evidence/wp-01/.
+  offline_model_rule: Use TestModel, FunctionModel, or versioned recorded fixtures with live model requests disabled whenever an agent/API/stream path is available.
+  live_paid_provider_authorized: false
 target_worktree:
   path: /Users/muhammad/Documents/NCAI/Products/Visualization Agent/.codex-worktrees/wp-01
   branch: codex/wp-01-foundation

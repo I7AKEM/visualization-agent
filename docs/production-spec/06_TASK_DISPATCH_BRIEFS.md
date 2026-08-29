@@ -28,6 +28,12 @@ Before editing, read these repository documents completely in this order:
 
 Treat documents 1–7 as normative in the precedence order declared by README.md. Implement only <WP-ID> and its owned paths. Its dependency evidence is available at <dependency-evidence paths/commit>. Do not guess organization facts or weaken a gate. If a required owner input is absent, keep the feature disabled with the specified typed behavior and report the missing input.
 
+Execution authorization: without redundant confirmation, you may inspect or download dependency metadata and dependencies; create repository-local toolchains or virtual environments; generate locks; run tests, builds, linters, security scans, and SBOM scans; create isolated Git worktrees; make non-destructive commits; perform fast-forward integration when this task owns integration; and create temporary files. This authorization does not bypass host, sandbox, or tool-enforced approvals.
+
+The following remain excluded and blocking unless the user later authorizes the exact action: deletion; destructive Git; global or system changes; secrets or credentials; paid services or billable model calls; external communication; deployment; production access or production data; privilege expansion; organization decisions; and weakening gates. Split mixed operations, continue only with the pre-authorized portion, and stop before the excluded portion. Preserve all disabled features and provide exact evidence: commands, versions or digests, exit codes, factual results, skipped gates, and reasons.
+
+Apply the cross-cutting `LOCAL-RUNTIME` gate whenever this package owns runnable behavior; static, unit, schema, and build results alone cannot satisfy acceptance. From frozen locks, start the relevant API, workers, and web app locally; prove health/readiness, dependency-failure behavior, and graceful shutdown. Exercise the agent through its real local API and streaming event path using offline Pydantic AI `TestModel`, `FunctionModel`, or versioned recorded fixtures. Do not make a live paid-provider call without separate authorization. From WP-05 onward, use Playwright plus a real browser or Computer Use to click through the applicable upload, stream, render, clarification/revision, reconnect, error, Arabic/RTL, keyboard/accessibility, and responsive paths. Renderer, map/temporal, export/infographic, and later packages extend this same local end-to-end suite. Store exact commands, logs, request/response/event traces, screenshots or videos, dataset/result/artifact hashes, failures, and retest results in the handoff evidence. Every subgate is `passed`, `failed`, or `not_applicable`; `not_applicable` requires an exact ownership/dependency reason and is invalid for owned runnable behavior.
+
 Preserve unrelated user changes. Do not use agent/model output as executable code, SQL, renderer code, authorization, or approval. Add deterministic code tests and the required eval cases for every affected model behavior. Run every applicable gate locally; distinguish tests actually run from tests requiring CI or external infrastructure.
 
 Commit the substantive delivery first, then commit one handoff-only packet using the two-commit protocol in section 5. The packet contains: the substantive delivery commit, changed paths, requirement IDs, exact commands/results, eval dataset changes/results, migration and compatibility notes, configuration/secret names without values, observability changes, known risks/disabled features, and rollback steps. A submitted packet uses `handoff_commit: null`; only the integration owner records the now-known handoff commit during acceptance. Do not claim zero bugs; fail the task if a critical gate is not proven.
@@ -61,6 +67,7 @@ A dependency is usable only when its integration commit has:
 
 - `docs/evidence/<wp-id>/handoff.yaml` validated against the handoff schema and its delivery/handoff Git relationships;
 - a green CI run for that exact commit/digest;
+- a passed `LOCAL-RUNTIME` gate for every runnable behavior the package owns, with exact local start, exercise, trace, artifact, and shutdown evidence;
 - contract/schema/version manifests with checksums;
 - no unresolved severity-0/1 or critical-gate failure;
 - an integration-owner acceptance record at `docs/evidence/integration/<wp-id>-acceptance.yaml`.
@@ -68,6 +75,10 @@ A dependency is usable only when its integration commit has:
 The dependent task prompt names the substantive delivery commit, handoff commit, integration acceptance commit, and evidence paths. “Another task said it was done” is not dependency evidence.
 
 `WP-00` is the only bootstrap exception to the green-CI rule because `WP-01` creates the CI foundation. The integration owner MAY conditionally accept `WP-00` for owner-independent `WP-01` scaffolding after documentation, YAML, ownership, ancestry, and POC-preservation checks pass. That acceptance MUST keep production and every owner-dependent capability disabled, MUST list every unresolved owner input, and MUST NOT be reused as production approval or release evidence.
+
+### 4.1 `LOCAL-RUNTIME` integration rule
+
+The integration owner MUST reproduce or independently inspect every applicable `LOCAL-RUNTIME` result after receiving the branch. An acceptance record names each owned runnable component and each progressive subgate as `passed`, `failed`, or `not_applicable`, links the stored evidence, and records the exact receiving-branch commands and results. Missing evidence, a failed start/readiness/stream/UI/shutdown path, or a generic `not_applicable` rationale blocks acceptance. WP-00 is not a precedent: its documentation-only bootstrap owned no runnable behavior.
 
 ## 5. Handoff schema
 
@@ -98,7 +109,24 @@ known_risks: []
 rollback_steps: []
 critical_gates_passed: []
 reviewers_required: []
+local_runtime_evidence:
+  status: not_applicable # passed | failed | not_applicable
+  rationale: "<exact owned-behavior or dependency rationale>"
+  subgates:
+    frozen_lock_start_health_shutdown: "<passed|failed|not_applicable>"
+    offline_agent_api_and_stream: "<passed|failed|not_applicable>"
+    wp_05_plus_real_ui: "<passed|failed|not_applicable>"
+    later_package_suite_extension: "<passed|failed|not_applicable>"
+  frozen_lock_start_commands: []
+  health_readiness_checks: []
+  graceful_shutdown_checks: []
+  agent_api_stream_traces: []
+  ui_e2e_artifacts: []
+  dataset_result_artifact_hashes: []
+  failures_and_retests: []
 ```
+
+`local_runtime_evidence` is mandatory for WP-01 and later handoffs. The shown `not_applicable` value is valid only when the package owns no runnable behavior in that subgate; it is not a default waiver.
 
 ### 5.1 Non-self-referential commit semantics
 
@@ -130,6 +158,12 @@ validation: []
 unresolved_owner_inputs: []
 disabled_features: []
 conditions: []
+local_runtime_gate:
+  status: "<passed|failed|not_applicable>"
+  components: []
+  subgates: {}
+  evidence: []
+  integration_commands: []
 rollback_steps: []
 dependent_task_base_rule: acceptance_record_introduction_commit
 ```
@@ -144,6 +178,10 @@ The integration task is a separate fresh-context task, but it is not a work-pack
 
 ```text
 Act as integration owner for the Production Visualization Agent. Read the seven normative documents completely. Inspect a submitted work-package delivery commit and handoff-only commit. Verify ownership, dependencies, schemas, migrations, tests/evals, security, observability, rollback, and the Git relationships in section 5. Merge only in the documented wave/dependency order. After merge, run the receiving branch's applicable full gates, annotate the resolved handoff commit, and write an integration acceptance record. Reject or return the branch for correction if any critical evidence is absent. Never repair a work package by silently changing its contract; send the correction to that isolated task.
+
+Without redundant confirmation, you may inspect or download dependency metadata and dependencies; create repository-local toolchains or virtual environments; generate locks; run tests, builds, linters, security scans, and SBOM scans; create isolated Git worktrees; make non-destructive commits; perform fast-forward integration; and create temporary files. This authorization does not bypass host, sandbox, or tool-enforced approvals. Deletion, destructive Git, global or system changes, secrets or credentials, paid services or billable model calls, external communication, deployment, production access or production data, privilege expansion, organization decisions, and weakening gates remain excluded and blocking unless the user later authorizes the exact action. Split mixed operations and stop before the excluded portion. Preserve all disabled features and require exact command, version or digest, exit-code, result, skipped-gate, and reason evidence.
+
+Enforce `LOCAL-RUNTIME` for every owned runnable behavior; static, unit, schema, and build results alone are insufficient. On the receiving branch and from frozen locks, start the relevant local API, workers, and web app; verify health/readiness, dependency-failure behavior, and graceful shutdown; and exercise the agent through its real API and streaming event path with offline `TestModel`, `FunctionModel`, or recorded fixtures. From WP-05 onward, require Playwright plus a real browser or Computer Use click-through of applicable upload, stream, render, clarification/revision, reconnect, error, Arabic/RTL, keyboard/accessibility, and responsive paths. Require later renderer, map/temporal, and export packages to extend the same suite. Store and link exact commands, logs, traces, screenshots/videos, hashes, failures, and retests in the integration acceptance. Keep live paid model calls, secrets, production deployment, and production access/data blocked absent separate authorization.
 ```
 
 The integration task never combines user feedback threads: it records only accepted evidence and sends defects back to the originating work-package task.

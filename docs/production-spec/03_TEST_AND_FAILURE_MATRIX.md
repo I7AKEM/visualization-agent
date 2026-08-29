@@ -14,6 +14,18 @@ Testing proves specified behavior; it does not prove the absence of every possib
 
 The requirements traceability table (`tests/requirements.yaml`) is mandatory. CI fails when a normative requirement has no test or a test references an unknown requirement.
 
+### 1.1 Cross-cutting `LOCAL-RUNTIME` acceptance gate
+
+A package that owns runnable behavior MUST pass `LOCAL-RUNTIME`; static analysis, unit tests, schema checks, and builds are necessary but are not acceptance substitutes. The gate is progressive across the integrated slice available to the package:
+
+1. Install and start every relevant API, worker, and web application locally from frozen locks using repository-local or temporary toolchains. Verify liveness, readiness, dependency-failure behavior, and graceful shutdown without production access or data.
+2. Exercise the agent through the real local API and streaming event path. Ordinary runs MUST use Pydantic AI `TestModel`, `FunctionModel`, or versioned recorded fixtures with live model requests disabled. A live paid-provider run requires separate explicit authorization and is never implied by this gate.
+3. Starting with WP-05, run Playwright and use a real browser or Computer Use to click through the integrated UI. Cover upload, streaming, render, clarification/revision, reconnect, error, Arabic/RTL, keyboard/accessibility, and responsive paths as those behaviors enter the integrated slice.
+4. WP-08 renderer, WP-09 map/temporal, WP-12 export/infographic, and later packages MUST extend the same local end-to-end suite rather than replace it with package-local static or component evidence.
+5. Store exact start/test/shutdown commands; tool and lock versions; exit codes; health/readiness output; request, response, and ordered event traces; logs; screenshots or videos; dataset, result, and artifact hashes; failures; and retest results under `docs/evidence/<wp-id>/`.
+
+Each subgate is recorded as `passed`, `failed`, or `not_applicable`. `not_applicable` requires an exact ownership/dependency explanation and cannot be used for runnable behavior the package owns. An integration record MUST NOT accept or conditionally accept a package when an applicable subgate lacks evidence or fails, and MUST preserve typed disabled behavior for owner-dependent capabilities.
+
 ## 2. Required test toolchain
 
 Python:
