@@ -118,6 +118,35 @@ async def run(request):
     def line(obj) -> str:
         return json.dumps(obj, ensure_ascii=False) + "\n"
 
+    def describe_error(exc: BaseException) -> str:
+        """Flatten exception groups and cause chains — the FIRST failure is the story,
+        not whichever cleanup error surfaced last (e.g. 'McpError: Connection closed')."""
+        try:
+            groups = (BaseExceptionGroup,)  # Python 3.11+
+        except NameError:
+            groups = ()
+        parts, seen = [], set()
+
+        def walk(x):
+            if x is None or id(x) in seen or len(parts) >= 5:
+                return
+            seen.add(id(x))
+            if groups and isinstance(x, groups):
+                for sub in x.exceptions:
+                    walk(sub)
+            else:
+                parts.append(f"{type(x).__name__}: {x}")
+                walk(x.__cause__ or x.__context__)
+
+        walk(exc)
+        msg = "  ⇦  ".join(parts)
+        low = msg.lower()
+        if "tool" in low and ("support" in low or "no endpoints" in low or "404" in low):
+            msg += "  — this model likely does not support tool calling; pick a model with the 'tools' tag on openrouter.ai/models"
+        elif "connection closed" in low and len(parts) <= 1:
+            msg += "  — often masks a model that cannot do tool calling; try a tools-capable model"
+        return msg
+
     async def smart_events():
         t0 = time.perf_counter()
         yield {"type": "status", "message": f"smart track: agent starting — model: {model_str}"}
@@ -165,8 +194,10 @@ async def run(request):
                 if track in ("smart", "both"):
                     async for e in smart_events():
                         yield line(e)
-            except Exception as e:  # surfaced in the UI, not swallowed
-                yield line({"type": "error", "message": f"{type(e).__name__}: {e}"})
+            except BaseException as e:  # surfaced in the UI, not swallowed
+                if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                    raise
+                yield line({"type": "error", "message": describe_error(e)})
 
     return StreamingResponse(gen(), media_type="application/x-ndjson")
 
