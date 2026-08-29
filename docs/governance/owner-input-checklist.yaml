@@ -153,6 +153,38 @@ inputs:
     status: input_required
     blocks: [work_package_acceptance, integration_merge]
     sources: [README.md#8, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#11]
+    scoped_assignments:
+      - work_package: WP-01
+        status: assigned
+        owner:
+          task_name: VA WP-01 Foundation
+          thread_id: 01a04e86-6467-72c1-9502-6569ab95cd13
+          worktree: /Users/muhammad/Documents/NCAI/Products/Visualization Agent/.codex-worktrees/wp-01
+          branch: codex/wp-01-foundation
+        reviewer:
+          task_name: VA Integration Owner
+          thread_id: 01a04e73-e0c0-7502-82dc-5eac4729e7fe
+        integration_owner:
+          task_name: VA Integration Owner
+          thread_id: 01a04e73-e0c0-7502-82dc-5eac4729e7fe
+        decision_reference: docs/evidence/integration/wp-01-assignment.yaml
+        decided_at: '2026-08-29'
+        effect: OI-015 assignment gate is resolved for WP-01 only; the global record remains input_required for every other work package.
+    remaining_unassigned_work_packages:
+      - WP-00
+      - WP-02
+      - WP-03
+      - WP-04
+      - WP-05
+      - WP-06
+      - WP-07
+      - WP-08
+      - WP-09
+      - WP-10
+      - WP-11
+      - WP-12
+      - WP-13
+      - WP-14
   - id: OI-016
     subject: upload_scan_and_object_service_selection
     required_value: Approved object storage and malware/content scanning services, regions, limits, retention integration, and service owners.

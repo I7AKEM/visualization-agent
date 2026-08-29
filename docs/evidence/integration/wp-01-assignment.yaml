@@ -1,0 +1,86 @@
+schema_version: 1
+record_type: work_package_assignment
+work_package: WP-01
+status: assigned
+assigned_at: '2026-08-29'
+assignment_base_commit: 50a30911e9eb720b6ba8986cdf1d97f12e6a6640
+assignment_commit_rule: assignment_record_introduction_commit
+owner_input: OI-015
+owner_input_scope_status: resolved_for_wp_01_only
+global_owner_input_status: input_required
+owner:
+  task_name: VA WP-01 Foundation
+  thread_id: 01a04e86-6467-72c1-9502-6569ab95cd13
+  worktree: /Users/muhammad/Documents/NCAI/Products/Visualization Agent/.codex-worktrees/wp-01
+  branch: codex/wp-01-foundation
+reviewer:
+  task_name: VA Integration Owner
+  thread_id: 01a04e73-e0c0-7502-82dc-5eac4729e7fe
+integration_owner:
+  task_name: VA Integration Owner
+  thread_id: 01a04e73-e0c0-7502-82dc-5eac4729e7fe
+assignment_scope:
+  allowed:
+    - WP-01 owner-independent monorepo, dependency-lock, compatibility-test, and CI foundation work from the conditionally accepted WP-00 base.
+  prohibited:
+    - WP-01 product feature implementation.
+    - Any owner-dependent or production capability.
+    - Any assignment or acceptance implication for WP-00 or WP-02 through WP-14.
+target_worktree:
+  path: /Users/muhammad/Documents/NCAI/Products/Visualization Agent/.codex-worktrees/wp-01
+  branch: codex/wp-01-foundation
+  observed_head_before_assignment: 50a30911e9eb720b6ba8986cdf1d97f12e6a6640
+  observed_clean: true
+integration_effect:
+  wp_01_assignment_gate: satisfied
+  wp_01_dependency_gate: conditionally_satisfied
+  production_approved: false
+production_approved: false
+unresolved_owner_inputs:
+  - OI-001
+  - OI-002
+  - OI-003
+  - OI-004
+  - OI-005
+  - OI-006
+  - OI-007
+  - OI-008
+  - OI-009
+  - OI-010
+  - OI-011
+  - OI-012
+  - OI-013
+  - OI-014
+  - OI-015
+  - OI-016
+disabled_features:
+  - DF-001
+  - DF-002
+  - DF-003
+  - DF-004
+  - DF-005
+  - DF-006
+  - DF-007
+  - DF-008
+  - DF-009
+  - DF-010
+  - DF-011
+  - DF-012
+  - DF-013
+bring_into_target:
+  precondition_head: 50a30911e9eb720b6ba8986cdf1d97f12e6a6640
+  precondition_clean: true
+  command_template: git merge --ff-only <assignment-record-introduction-commit>
+  expected_effect: The target branch fast-forwards from the accepted WP-00 base to the exact scoped assignment/governance evidence commit before WP-01 implementation begins.
+validation:
+  - id: TARGET-WORKTREE-BASE
+    result: PASS branch codex/wp-01-foundation is clean at 50a30911e9eb720b6ba8986cdf1d97f12e6a6640 before assignment.
+  - id: OI015-SCOPED-REFERENCE
+    result: PASS owner, reviewer, integration owner, thread, worktree, and branch match the governance checklist.
+  - id: OWNER-DEPENDENT-DISABLEMENT
+    result: PASS all 16 global owner-input records remain input_required and all 13 production capability records remain disabled.
+  - id: POC-PRESERVATION
+    result: PASS runtime blobs and the 73-file out manifest match the accepted integration snapshot.
+rollback_steps:
+  - Revert the assignment-record introduction commit from the integration branch and the WP-01 worktree before WP-01 implementation if this assignment is withdrawn.
+  - Restore OI-015/WP-01 to unassigned while leaving every other scoped assignment unchanged.

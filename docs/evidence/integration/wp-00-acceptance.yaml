@@ -11,9 +11,9 @@ production_approved: false
 acceptance_scope:
   dependency_status: conditionally_satisfied
   allowed:
-    - Owner-independent WP-01 monorepo, dependency-lock, compatibility-test, and CI scaffolding after a named WP-01 owner and reviewer are assigned.
+    - Owner-independent WP-01 monorepo, dependency-lock, compatibility-test, and CI scaffolding under the scoped OI-015 assignment in docs/evidence/integration/wp-01-assignment.yaml.
   blocked:
-    - WP-01 dispatch before its named owner and reviewer are assigned under OI-015.
+    - Any work-package dispatch other than WP-01 until that package receives its own scoped OI-015 owner/reviewer assignment.
     - Production deployment, traffic, authentication, persistence, uploads, background jobs, external model routes, maps, governed connectors, publication, sharing, export, purge, beta enrollment, and production SLO claims.
     - Any interpretation of this record as full WP-00 completion, organization approval, security approval, or production release evidence.
 unresolved_owner_inputs:
@@ -33,6 +33,12 @@ unresolved_owner_inputs:
   - OI-014
   - OI-015
   - OI-016
+scoped_owner_input_resolutions:
+  - owner_input: OI-015
+    scope: WP-01
+    status: resolved
+    evidence: docs/evidence/integration/wp-01-assignment.yaml
+    global_record_status: input_required
 disabled_features:
   - DF-001
   - DF-002
@@ -48,7 +54,7 @@ disabled_features:
   - DF-012
   - DF-013
 conditions:
-  - Assign and record the WP-01 owner and reviewer before dispatch; resolving OI-015 for WP-01 does not resolve unrelated package ownership.
+  - The WP-01 owner/reviewer assignment is recorded and its dispatch gate is satisfied; OI-015 remains unresolved for WP-00 and WP-02 through WP-14.
   - Preserve every disabled feature until all of its blocker IDs have approved owner evidence and the owning future work package passes its gates.
   - Treat the local WP-00 bootstrap checks as documentation/governance evidence only; WP-01 must create CI and later packages must supply green CI for their exact accepted artifacts.
   - Do not use the preserved POC runtime, mutable out directory, or public rendering paths as production implementation or evidence.
@@ -79,9 +85,9 @@ validation:
   - id: WP00-YAML-PARSE-AND-REFERENCES
     evaluated_commit: working_tree_before_acceptance_commit
     command: >-
-      ruby -e 'require "yaml"; files=Dir["docs/governance/*.yaml"].sort+["docs/evidence/wp-00/handoff.yaml","docs/evidence/integration/wp-00-acceptance.yaml"]; docs=files.to_h{|f| [f,YAML.load_file(f)]}; owner_rows=docs.fetch("docs/governance/owner-input-checklist.yaml").fetch("inputs"); owners=owner_rows.map{|x| x.fetch("id")}; features=docs.fetch("docs/governance/disabled-features.yaml").fetch("features"); blockers=features.flat_map{|x| x.fetch("blockers")}.uniq; reqs=docs.fetch("docs/governance/requirements-traceability.yaml").fetch("requirements"); refs=docs.fetch("docs/governance/governance-packet.yaml").values_at("records","adrs","evidence").flatten; raise "unknown blocker" unless (blockers-owners).empty?; raise "owner state" unless owner_rows.all?{|x| x.fetch("status")=="input_required" && x["owner"].nil? && x["reviewer"].nil?}; raise "feature state" unless features.all?{|x| x.fetch("status")=="disabled"}; raise "missing packet ref" unless refs.all?{|p| File.exist?(p)}; raise "missing requirement evidence" unless reqs.flat_map{|x| x.fetch("evidence")}.all?{|p| File.exist?(p)}; h=docs.fetch("docs/evidence/wp-00/handoff.yaml"); a=docs.fetch("docs/evidence/integration/wp-00-acceptance.yaml"); raise "requirement mismatch" unless h.fetch("requirements").sort==reqs.map{|x|x.fetch("id")}.sort; raise "disabled mismatch" unless h.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort; raise "owner mismatch" unless a.fetch("unresolved_owner_inputs").sort==owners.sort; raise "acceptance disabled mismatch" unless a.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort; raise "production approval" unless a.fetch("production_approved")==false; puts "PASS #{files.length} YAML files, #{owners.length} unresolved owner inputs, #{features.length} disabled features, #{reqs.length} requirements"'
+      ruby -e 'require "yaml"; files=Dir["docs/governance/*.yaml"].sort+["docs/evidence/wp-00/handoff.yaml","docs/evidence/integration/wp-00-acceptance.yaml","docs/evidence/integration/wp-01-assignment.yaml"]; docs=files.to_h{|f| [f,YAML.load_file(f)]}; owner_rows=docs.fetch("docs/governance/owner-input-checklist.yaml").fetch("inputs"); owners=owner_rows.map{|x| x.fetch("id")}; features=docs.fetch("docs/governance/disabled-features.yaml").fetch("features"); blockers=features.flat_map{|x| x.fetch("blockers")}.uniq; reqs=docs.fetch("docs/governance/requirements-traceability.yaml").fetch("requirements"); refs=docs.fetch("docs/governance/governance-packet.yaml").values_at("records","adrs","evidence").flatten; raise "unknown blocker" unless (blockers-owners).empty?; raise "owner state" unless owner_rows.all?{|x| x.fetch("status")=="input_required" && x["owner"].nil? && x["reviewer"].nil?}; raise "feature state" unless features.all?{|x| x.fetch("status")=="disabled"}; raise "missing packet ref" unless refs.all?{|p| File.exist?(p)}; raise "missing requirement evidence" unless reqs.flat_map{|x| x.fetch("evidence")}.all?{|p| File.exist?(p)}; h=docs.fetch("docs/evidence/wp-00/handoff.yaml"); a=docs.fetch("docs/evidence/integration/wp-00-acceptance.yaml"); assignment=docs.fetch("docs/evidence/integration/wp-01-assignment.yaml"); oi15=owner_rows.find{|x| x.fetch("id")=="OI-015"}; scoped=oi15.fetch("scoped_assignments").find{|x| x.fetch("work_package")=="WP-01"}; raise "assignment mismatch" unless scoped.fetch("status")=="assigned" && assignment.fetch("owner")==scoped.fetch("owner") && assignment.fetch("reviewer")==scoped.fetch("reviewer") && assignment.fetch("integration_owner")==scoped.fetch("integration_owner"); raise "requirement mismatch" unless h.fetch("requirements").sort==reqs.map{|x|x.fetch("id")}.sort; raise "disabled mismatch" unless h.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort; raise "owner mismatch" unless a.fetch("unresolved_owner_inputs").sort==owners.sort; raise "acceptance disabled mismatch" unless a.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort && assignment.fetch("disabled_features").sort==features.map{|x|x.fetch("id")}.sort; raise "production approval" unless a.fetch("production_approved")==false && assignment.fetch("production_approved")==false; puts "PASS #{files.length} YAML files, scoped WP-01 assignment, #{owners.length} globally unresolved owner inputs, #{features.length} disabled features, #{reqs.length} requirements"'
     exit_code: 0
-    result: PASS 12 YAML files, 16 unresolved owner inputs, 13 disabled features, 14 requirements.
+    result: PASS 13 YAML files, scoped WP-01 assignment, 16 globally unresolved owner inputs, 13 disabled features, 14 requirements.
     result_artifact: inline
   - id: WP00-GIT-ANCESTRY
     evaluated_commit: 29881f5f59b1b3595a4498d73163a41be89afa75
