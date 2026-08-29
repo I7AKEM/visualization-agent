@@ -1,0 +1,93 @@
+schema_version: 1
+record_id: WP00-TRACEABILITY-SKELETON
+status: skeleton_complete_future_test_evidence_pending
+scope: WP-00 governance requirements only; WP-02 expands normative MUST/MUST NOT coverage into tests/requirements.yaml.
+requirements:
+  - id: GOV-001
+    statement: Organization-specific cloud, account, region, identity, boundary, semantic, owner, provider, and retention facts are never guessed.
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#1]
+    evidence: [docs/governance/owner-input-checklist.yaml, docs/governance/governance-packet.yaml]
+    verification: yaml_referential_integrity
+    future_test_owner: WP-01
+  - id: GOV-002
+    statement: Missing owner input keeps every dependent production capability disabled with fail-closed behavior.
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#10]
+    evidence: [docs/governance/disabled-features.yaml]
+    verification: every_disabled_feature_references_known_input
+    future_test_owner: WP-01
+  - id: GOV-003
+    statement: The current POC is inventoried without modifying its runtime or unrelated user changes.
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#10, 06_TASK_DISPATCH_BRIEFS.md#3]
+    evidence: [docs/governance/poc-inventory.yaml, docs/evidence/wp-00/handoff.yaml]
+    verification: changed_path_scope_and_git_diff_review
+    future_test_owner: WP-00
+  - id: GOV-004
+    statement: POC behaviors that violate production contracts are explicitly prohibited from production promotion.
+    sources: [01_DECISIONS_AND_ARCHITECTURE.md#2, 06_TASK_DISPATCH_BRIEFS.md#3]
+    evidence: [docs/governance/prohibited-production-paths.yaml]
+    verification: prohibited_path_register_nonempty_and_uniquely_identified
+    future_test_owner: WP-01
+  - id: GOV-005
+    statement: Data classification uses only public, internal, confidential, and restricted with the normative egress/telemetry/export rules.
+    sources: [01_DECISIONS_AND_ARCHITECTURE.md#6]
+    evidence: [docs/governance/data-classification-acceptance.yaml]
+    verification: exact_class_id_and_rule_review
+    future_test_owner: WP-03
+  - id: GOV-006
+    statement: Retention class names, durations, deletion SLAs, legal holds, and backup alignment remain input-required until accepted.
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3]
+    evidence: [docs/governance/retention-acceptance.yaml]
+    verification: no_invented_retention_period
+    future_test_owner: WP-03
+  - id: GOV-007
+    statement: Controlled-beta SLO and recovery objectives are transcribed without weakening correctness or security.
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#5]
+    evidence: [docs/governance/slo-acceptance.yaml]
+    verification: objective_value_comparison_to_normative_source
+    future_test_owner: WP-13
+  - id: GOV-008
+    statement: Default beta limits are recorded and cannot be increased without performance and security evidence.
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#5]
+    evidence: [docs/governance/limit-acceptance.yaml]
+    verification: exact_limit_value_comparison_and_change_control
+    future_test_owner: WP-01
+  - id: GOV-009
+    statement: Cloud/runtime engineering direction is recorded while provider, account, region, domain, and ownership selections remain unresolved.
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#1]
+    evidence: [docs/adr/ADR-004-deployment-platform-and-region.md]
+    verification: adr_status_and_input_links
+    future_test_owner: WP-14
+  - id: GOV-010
+    statement: Authoritative Saudi boundary functionality is disabled until a licensed, versioned source with stable bilingual IDs and an update owner is supplied.
+    sources: [README.md#6, 01_DECISIONS_AND_ARCHITECTURE.md#8]
+    evidence: [docs/adr/ADR-005-authoritative-saudi-boundaries.md, docs/governance/disabled-features.yaml]
+    verification: adr_and_disable_register_consistency
+    future_test_owner: WP-09
+  - id: GOV-011
+    statement: Governed connectors are deferred rather than inventing a semantic layer or business metrics.
+    sources: [README.md#6, 01_DECISIONS_AND_ARCHITECTURE.md#9]
+    evidence: [docs/adr/ADR-006-governed-semantic-source.md, docs/governance/disabled-features.yaml]
+    verification: adr_and_disable_register_consistency
+    future_test_owner: WP-11
+  - id: GOV-012
+    statement: Production authentication and delegated-agent flows are disabled until the OIDC claim/policy ownership contract is approved.
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3]
+    evidence: [docs/adr/ADR-008-identity-provider-and-policy-ownership.md, docs/governance/disabled-features.yaml]
+    verification: adr_and_disable_register_consistency
+    future_test_owner: WP-03
+  - id: GOV-013
+    statement: Every work package handoff carries exact paths, commands/results, risks, disabled features, rollback, and required reviewers.
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#11, 06_TASK_DISPATCH_BRIEFS.md#5]
+    evidence: [docs/evidence/wp-00/handoff.yaml]
+    verification: handoff_required_key_and_type_validation
+    future_test_owner: WP-01
+  - id: GOV-014
+    statement: WP-00 stays within docs/governance, docs/adr, and docs/evidence/wp-00 and does not begin WP-01.
+    sources: [06_TASK_DISPATCH_BRIEFS.md#3]
+    evidence: [docs/evidence/wp-00/handoff.yaml]
+    verification: git_changed_path_allowlist
+    future_test_owner: WP-00
+coverage_notes:
+  - This file is a traceability skeleton, not a claim that the full system requirement set is tested.
+  - WP-02 owns contract/schema traceability and must generate the repository-wide tests/requirements.yaml without hand-editing generated clients.
+  - Future work packages append machine-readable result references; they do not mark an unrun gate as passed.

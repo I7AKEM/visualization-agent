@@ -1,0 +1,169 @@
+schema_version: 1
+record_id: WP00-OWNER-INPUTS
+status: input_required
+rule: Missing input keeps every dependent production capability disabled; implementers must not infer a value.
+inputs:
+  - id: OI-001
+    subject: cloud_provider_and_account
+    required_value: Approved cloud provider plus account, subscription, or project identifiers.
+    accountable_role: organization_platform_owner
+    owner: null
+    reviewer_role: security
+    reviewer: null
+    status: input_required
+    blocks: [production_deployment, managed_service_provisioning]
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#1]
+  - id: OI-002
+    subject: data_region_and_residency
+    required_value: Approved production and disaster-recovery regions with residency constraints.
+    accountable_role: organization_security_or_data_owner
+    owner: null
+    reviewer_role: legal_privacy
+    reviewer: null
+    status: input_required
+    blocks: [production_deployment, model_egress, backup_restore_topology]
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#1]
+  - id: OI-003
+    subject: domains_ingress_and_certificate_ownership
+    required_value: Approved domains, DNS owner, certificate owner, ingress exposure, and WAF ownership.
+    accountable_role: organization_network_owner
+    owner: null
+    reviewer_role: security
+    reviewer: null
+    status: input_required
+    blocks: [production_ingress]
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#1]
+  - id: OI-004
+    subject: network_and_workload_identity_ownership
+    required_value: Network segmentation, private endpoint, workload identity, egress proxy, and firewall owners.
+    accountable_role: organization_network_owner
+    owner: null
+    reviewer_role: security
+    reviewer: null
+    status: input_required
+    blocks: [production_deployment, connector_workers, private_dependencies]
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3]
+  - id: OI-005
+    subject: identity_provider_and_claim_contract
+    required_value: Approved OIDC IdP, tenant/issuer, client registration, claim/role mapping, session, MFA, conditional-access, logout, and support ownership.
+    accountable_role: organization_identity_owner
+    owner: null
+    reviewer_role: security
+    reviewer: null
+    status: input_required
+    blocks: [production_authentication, external_agent_delegation, publication_sharing]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3]
+  - id: OI-006
+    subject: data_retention_and_deletion_policy
+    required_value: Named retention classes, durations, deletion SLAs, legal-hold behavior, backup alignment, and approval authority.
+    accountable_role: organization_data_governance_owner
+    owner: null
+    reviewer_role: legal_privacy_security
+    reviewer: null
+    status: input_required
+    blocks: [production_persistence, purge_workflows, publication_sharing, production_telemetry]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3]
+  - id: OI-007
+    subject: approved_model_providers_and_routes
+    required_value: Provider/model route allowlist by classification, region, no-training terms, capability, cost, and fallback compatibility.
+    accountable_role: organization_ai_governance_owner
+    owner: null
+    reviewer_role: security_data_governance
+    reviewer: null
+    status: input_required
+    blocks: [external_model_calls, model_fallback, model_catalog]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 01_DECISIONS_AND_ARCHITECTURE.md#6]
+  - id: OI-008
+    subject: mapbox_account_and_token_policy
+    required_value: Approved account, procurement, public-token scopes/URL restrictions, secret-token handling, quotas, and outage owner.
+    accountable_role: organization_platform_or_geo_owner
+    owner: null
+    reviewer_role: security_procurement
+    reviewer: null
+    status: input_required
+    blocks: [production_map_rendering, map_exports]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3]
+  - id: OI-009
+    subject: authoritative_saudi_boundary_source
+    required_value: Licensed/versioned boundary dataset, license terms, stable bilingual identifiers, valid-time policy, source provenance, and update owner.
+    accountable_role: organization_data_owner
+    owner: null
+    reviewer_role: legal_geo_domain
+    reviewer: null
+    status: input_required
+    blocks: [authoritative_choropleths, boundary_joins, saudi_admin_region_analysis]
+    sources: [README.md#6, 01_DECISIONS_AND_ARCHITECTURE.md#8]
+  - id: OI-010
+    subject: governed_semantic_source
+    required_value: Existing approved semantic layer/source, metrics and versions, relationships, access policy, connector choice, and data steward.
+    accountable_role: organization_data_owner
+    owner: null
+    reviewer_role: data_domain_security
+    reviewer: null
+    status: input_required
+    blocks: [governed_database_analysis, governed_connectors, first_party_mcp_semantics]
+    sources: [README.md#6, 01_DECISIONS_AND_ARCHITECTURE.md#9]
+  - id: OI-011
+    subject: postgres_capacity_backup_and_restore
+    required_value: Production sizing, availability topology, encryption/key ownership, backup schedule, restore evidence, and capacity owner.
+    accountable_role: organization_database_owner
+    owner: null
+    reviewer_role: operations_security
+    reviewer: null
+    status: input_required
+    blocks: [production_authoritative_state, rpo_rto_claim]
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#5]
+  - id: OI-012
+    subject: dbos_recovery_and_load_evidence
+    required_value: Approved DBOS deployment/recovery design plus representative load and duplicate-execution evidence.
+    accountable_role: organization_platform_owner
+    owner: null
+    reviewer_role: operations_engineering
+    reviewer: null
+    status: input_required
+    blocks: [production_background_jobs, scheduled_refresh, cleanup_durability]
+    sources: [README.md#6, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#1]
+  - id: OI-013
+    subject: business_traffic_and_slo_confirmation
+    required_value: Expected request concurrency, workload/data-size distribution, business criticality, support hours, and acceptance of SLO/RPO/RTO objectives.
+    accountable_role: product_owner
+    owner: null
+    reviewer_role: operations_engineering
+    reviewer: null
+    status: input_required
+    blocks: [controlled_beta, production_capacity_claims, limit_increases]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#5]
+  - id: OI-014
+    subject: on_call_incident_and_escalation_owners
+    required_value: Named service owner, integration owner, primary/secondary on-call, incident commander rota, security/privacy escalation, and stakeholder notification owner.
+    accountable_role: organization_operations_owner
+    owner: null
+    reviewer_role: product_security
+    reviewer: null
+    status: input_required
+    blocks: [controlled_beta, production_alerting, incident_response]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#1, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#6]
+  - id: OI-015
+    subject: work_package_owners_and_reviewers
+    required_value: Named owner and reviewer for WP-00 through WP-14 plus one integration owner.
+    accountable_role: engineering_lead
+    owner: null
+    reviewer_role: product_security_data_operations_as_applicable
+    reviewer: null
+    status: input_required
+    blocks: [work_package_acceptance, integration_merge]
+    sources: [README.md#8, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#11]
+  - id: OI-016
+    subject: upload_scan_and_object_service_selection
+    required_value: Approved object storage and malware/content scanning services, regions, limits, retention integration, and service owners.
+    accountable_role: organization_platform_security_owner
+    owner: null
+    reviewer_role: security_data_governance
+    reviewer: null
+    status: input_required
+    blocks: [production_uploads, production_ingestion]
+    sources: [05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3, 05_SECURITY_OPERATIONS_AND_DELIVERY.md#10]
+acceptance_rule:
+  required_fields: [owner, reviewer, decision_reference, decided_at]
+  evidence_required: approved ADR or signed governance decision linked from the updated record
+  implementation_effect: Update only the resolved input and dependent disabled-feature entries; do not broaden unrelated authority.

@@ -1,0 +1,84 @@
+schema_version: 1
+record_id: WP00-DISABLED-FEATURES
+status: active
+default_behavior: A missing input is a deny/unavailable decision, never an inferred configuration.
+features:
+  - id: DF-001
+    capability: production_deployment_and_traffic
+    status: disabled
+    blockers: [OI-001, OI-002, OI-003, OI-004, OI-005, OI-006, OI-011, OI-013, OI-014]
+    required_behavior: Production environment readiness and promotion must fail closed.
+    enablement_evidence: Approved ADRs, environment validation, owner assignments, security/operations review, and release gates.
+  - id: DF-002
+    capability: production_authentication_sessions_and_external_agent_delegation
+    status: disabled
+    blockers: [OI-005]
+    required_behavior: No production user or external-agent endpoint is enabled without the approved IdP/claims/delegation contract.
+    enablement_evidence: Accepted ADR-008 plus WP-03 authorization/tenant evidence.
+  - id: DF-003
+    capability: external_model_calls_and_fallback
+    status: disabled
+    blockers: [OI-002, OI-007]
+    required_behavior: Server catalog exposes no external route; unsupported requests return MODEL_POLICY_DENIED or MODEL_UNAVAILABLE as appropriate.
+    enablement_evidence: Approved provider routes by data class/region plus WP-06 model/eval evidence.
+  - id: DF-004
+    capability: confidential_or_restricted_external_model_egress
+    status: disabled
+    blockers: [OI-002, OI-006, OI-007]
+    required_behavior: No raw rows leave the private boundary; absent eligible private/local route yields MODEL_POLICY_DENIED.
+    enablement_evidence: Accepted classification, retention, provider, and residency controls.
+  - id: DF-005
+    capability: production_map_rendering_and_export
+    status: disabled
+    blockers: [OI-002, OI-008]
+    required_behavior: Map renderer/export route is absent or returns dependency unavailable without fabricating a basemap.
+    enablement_evidence: Approved Mapbox/account/token/region policy and WP-09 security evidence.
+  - id: DF-006
+    capability: authoritative_saudi_choropleths_and_boundary_joins
+    status: disabled
+    blockers: [OI-009]
+    required_behavior: Requests return input_required or typed unsupported behavior; never join on display names or substitute an unlicensed boundary.
+    enablement_evidence: Accepted ADR-005 boundary/version/license/bilingual-ID manifest and WP-09 tests.
+  - id: DF-007
+    capability: governed_database_analysis_and_semantic_connectors
+    status: disabled
+    blockers: [OI-010]
+    required_behavior: Governed source catalog is empty; the system must not invent metrics, joins, stewards, or a semantic layer.
+    enablement_evidence: Accepted ADR-006 and WP-11 access/read-only/lineage evidence.
+  - id: DF-008
+    capability: production_background_profile_analysis_export_refresh_and_cleanup
+    status: disabled
+    blockers: [OI-001, OI-002, OI-004, OI-011, OI-012]
+    required_behavior: No production DBOS job route is advertised before durable recovery/load evidence and authoritative storage exist.
+    enablement_evidence: WP-03 state/outbox and DBOS recovery/load acceptance for exact deployed versions.
+  - id: DF-009
+    capability: production_upload_and_ingestion
+    status: disabled
+    blockers: [OI-006, OI-016]
+    required_behavior: Upload endpoints are absent or unavailable until object storage, scan, retention, and cleanup controls are configured.
+    enablement_evidence: WP-04 scan/canonicalization/redaction/restart evidence.
+  - id: DF-010
+    capability: production_publication_sharing_export_and_retention_purge
+    status: disabled
+    blockers: [OI-005, OI-006, OI-014]
+    required_behavior: No publication/share/export/purge side effect can execute without identity, policy, retention, and operations ownership.
+    enablement_evidence: Accepted policies plus WP-10/WP-12/WP-13 evidence.
+  - id: DF-011
+    capability: controlled_beta_and_on_call_alerting
+    status: disabled
+    blockers: [OI-013, OI-014]
+    required_behavior: Do not enroll beta users or claim incident response coverage.
+    enablement_evidence: Accepted traffic/SLOs, alert routes, named on-call, drills, and runbooks.
+  - id: DF-012
+    capability: increases_above_default_beta_limits
+    status: disabled
+    blockers: [OI-013]
+    required_behavior: Configuration validation rejects higher values without linked performance/security evidence and acceptance.
+    enablement_evidence: Versioned load/security results plus approved limit change.
+  - id: DF-013
+    capability: work_package_acceptance_and_integration_merge
+    status: disabled
+    blockers: [OI-015]
+    required_behavior: An integration owner must not accept or merge a work package without named owner/reviewer and its evidence packet.
+    enablement_evidence: Named assignments and integration-owner acceptance record.
+scope_note: These controls govern the future production implementation. The preserved POC remains local research and is not converted into a partially enabled production service by WP-00.

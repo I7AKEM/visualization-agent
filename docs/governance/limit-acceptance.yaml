@@ -1,0 +1,29 @@
+schema_version: 1
+record_id: WP00-LIMITS
+status: engineering_baseline_recorded_owner_acceptance_required
+normative_source: docs/production-spec/05_SECURITY_OPERATIONS_AND_DELIVERY.md#5
+scope: default_controlled_beta_limits_until_measured
+limits:
+  upload_max_bytes:
+    value: 262144000
+    display: 250_MiB
+  dataset_max_rows: 5000000
+  dataset_max_columns: 200
+  dashboard_max_widgets: 20
+  concurrent_commands_per_user: 10
+  concurrent_commands_per_workspace: 50
+  default_analysis_deadline_ms: 120000
+  default_export_deadline_ms: 180000
+fixed_rules:
+  - Limits are product configuration returned to the UI and covered by boundary tests.
+  - Raising any limit requires performance and security evidence.
+  - Correctness and security never trade for capacity or latency.
+  - Lower environment- or classification-specific limits may be imposed by approved policy.
+required_input: OI-013
+acceptance:
+  product_owner: null
+  operations_owner: null
+  engineering_owner: null
+  security_reviewer: null
+  accepted_at: null
+production_effect: Defaults are the maximum beta baseline; increases and production capacity claims remain disabled until representative evidence and acceptance exist.

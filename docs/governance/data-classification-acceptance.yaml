@@ -1,0 +1,41 @@
+schema_version: 1
+record_id: WP00-DATA-CLASSIFICATION
+status: engineering_baseline_recorded_owner_acceptance_required
+normative_source: docs/production-spec/01_DECISIONS_AND_ARCHITECTURE.md#6
+classes:
+  - id: public
+    definition: Published open dataset.
+    external_model_rule: Approved providers only.
+    telemetry_rule: Redacted samples allowed in non-production only.
+    export_share_rule: Allowed by workspace policy.
+  - id: internal
+    definition: Ordinary business data.
+    external_model_rule: Approved enterprise/no-training route with minimized context.
+    telemetry_rule: IDs, schema, and statistics; no rows by default.
+    export_share_rule: Authenticated only.
+  - id: confidential
+    definition: Commercial or operational sensitive data.
+    external_model_rule: Private route or explicit policy-approved provider; no raw rows.
+    telemetry_rule: Hashes, IDs, and aggregates.
+    export_share_rule: Restricted, watermarked, and audited.
+  - id: restricted
+    definition: PII, health, security-sensitive, or regulated data.
+    external_model_rule: Private/local route only with field-level minimization.
+    telemetry_rule: Content capture off.
+    export_share_rule: Denied unless policy and approval both allow it.
+fixed_controls:
+  - The profiler may propose a class; policy and steward confirmation determine it.
+  - A model switch never changes egress eligibility.
+  - Missing policy decisions deny access.
+  - Raw confidential/restricted rows do not enter external prompts or telemetry by default.
+inputs_required:
+  - OI-002
+  - OI-006
+  - OI-007
+acceptance:
+  product_owner: null
+  data_governance_owner: null
+  security_reviewer: null
+  legal_privacy_reviewer: null
+  accepted_at: null
+production_effect: Classification-dependent egress/export policies and external model routes remain disabled until acceptance and provider-route evidence exist.

@@ -1,0 +1,56 @@
+schema_version: 1
+record_id: WP00-RETENTION
+status: input_required
+normative_sources:
+  - docs/production-spec/01_DECISIONS_AND_ARCHITECTURE.md#5
+  - docs/production-spec/02_CONTRACTS_AND_STATE_MACHINES.md#3
+  - docs/production-spec/02_CONTRACTS_AND_STATE_MACHINES.md#11
+  - docs/production-spec/05_SECURITY_OPERATIONS_AND_DELIVERY.md#2.3
+fixed_rules:
+  - Retention class is mandatory on every object record.
+  - Soft deletion/tombstone is distinct from retention purge.
+  - Legal hold, deletion, backup, and audit behavior must be policy-owned.
+  - Idempotency records live at least as long as the maximum client retry, export, and job window.
+  - Interactive clarification timeout defaults to 24 hours unless policy configures another value; timeout is not a storage-retention period.
+  - Signed URLs use the shortest practical expiry; exact duration remains configuration input.
+classes:
+  - subject: original_uploads
+    retention_class_name: input_required
+    retention_period: input_required
+    deletion_sla: input_required
+  - subject: canonical_datasets
+    retention_class_name: input_required
+    retention_period: input_required
+    deletion_sla: input_required
+  - subject: result_and_evidence_objects
+    retention_class_name: input_required
+    retention_period: input_required
+    deletion_sla: input_required
+  - subject: exports_and_publications
+    retention_class_name: input_required
+    retention_period: input_required
+    deletion_sla: input_required
+  - subject: command_state_outbox_and_idempotency
+    retention_class_name: input_required
+    retention_period: input_required_bounded_by_retry_and_replay_windows
+    deletion_sla: input_required
+  - subject: append_only_audit
+    retention_class_name: input_required
+    retention_period: input_required
+    deletion_sla: input_required_with_legal_hold_rules
+  - subject: telemetry_and_online_eval
+    retention_class_name: input_required_per_environment_and_classification
+    retention_period: input_required
+    deletion_sla: input_required
+  - subject: backups
+    retention_class_name: input_required
+    retention_period: input_required
+    deletion_sla: input_required_with_restore_and_legal_hold_alignment
+required_input: OI-006
+acceptance:
+  data_governance_owner: null
+  legal_privacy_reviewer: null
+  security_reviewer: null
+  operations_reviewer: null
+  accepted_at: null
+production_effect: Production persistence, purge, publication/sharing, and telemetry retention remain disabled until startup-validatable policy values and approvals exist.

@@ -1,0 +1,89 @@
+schema_version: 1
+record_id: WP00-PROHIBITED-PATHS
+status: active
+default_action: deny_or_replace
+register:
+  - id: PP-001
+    path: agent/main.py::build_prompt and run_agent
+    prohibited_behavior: Sends full CSV text and optional client-supplied SQL/handoff content to a model and instructs the model to calculate final figures.
+    violates: [data_minimization, host_numeric_authority, untrusted_input_boundary]
+    disposition: Retire as a production path; WP-06 receives compact authorized context and WP-07 supplies verified evidence only.
+  - id: PP-002
+    path: agent/web.py::run and build_agent
+    prohibited_behavior: Unauthenticated endpoint accepts full CSV plus an arbitrary model string and streams model/tool data without server-derived tenant/workspace/user identity.
+    violates: [authentication, authorization, tenant_isolation, model_catalog_policy]
+    disposition: Do not expose beyond loopback POC; replace through WP-03/WP-05/WP-06.
+  - id: PP-003
+    path: agent/web.py streaming generator
+    prohibited_behavior: Treats in-process NDJSON events and a process-local lock as state, with no committed outbox, cursor replay, idempotency, revision, or restart recovery.
+    violates: [authoritative_state, durable_streaming, idempotency, concurrency]
+    disposition: Replace with Postgres command/state/outbox and the normative SSE contract.
+  - id: PP-004
+    path: agent/fast_track.py::fast_events
+    prohibited_behavior: Loads all CSV rows in memory, performs naive inference/parsing, and may execute a heuristic plan after model failure.
+    violates: [bounded_ingestion, ambiguity_fail_closed, typed_source_contract]
+    disposition: Replace with WP-04 canonical ingestion and WP-07 typed execution; no semantic-guess fallback.
+  - id: PP-005
+    path: agent/fast_track.py::CACHE_FILE and cache_key
+    prohibited_behavior: Stores a mutable global plan cache keyed by partial schema/question/intent without tenant, workspace, policy, dataset version, classification, or engine version.
+    violates: [tenant_safe_cache, versioned_state, deletion_invalidation]
+    disposition: Never migrate cache contents; replace using the normative cache key contract.
+  - id: PP-006
+    path: agent/fast_track.py::execute_plan
+    prohibited_behavior: Aggregates, sorts, truncates series, creates top-N/Other, and derives growth narratives without immutable plans, lineage, approvals, evidence refs, or exact-mode separation.
+    violates: [mode_truth, transform_lineage, numerical_evidence, temporal_semantics]
+    disposition: Preserve only as research; implement typed transform/analysis in WP-07.
+  - id: PP-007
+    path: agent/main.py MCP toolset
+    prohibited_behavior: Gives a model direct chart-tool execution and relies on prompt rules for aggregation and numerical correctness.
+    violates: [host_validation, narrow_agent_authority, model_output_untrusted]
+    disposition: Agents may propose typed candidates only; ordinary application code validates and executes.
+  - id: PP-008
+    path: '@antv/mcp-server-chart default configuration'
+    prohibited_behavior: Can use AntV's public rendering service when VIS_REQUEST_SERVER is absent or misconfigured.
+    violates: [public_rendering_prohibition, data_egress_policy]
+    disposition: Production startup/config validation must make the public endpoint unreachable; interactive rendering stays in-browser and export is private.
+  - id: PP-009
+    path: demos/render-server.mjs
+    prohibited_behavior: Accepts unauthenticated POST bodies without content/type/schema/body/time/memory limits and serves mutable generated images without tenant authorization.
+    violates: [renderer_isolation, input_validation, resource_limits, object_authorization]
+    disposition: Keep as local fixture only; WP-12 owns the isolated private export worker.
+  - id: PP-010
+    path: ui/chart-bench.html
+    prohibited_behavior: Loads runtime libraries from public CDNs and computes aggregate/Other/insight results in an ungoverned browser path.
+    violates: [supply_chain_pin, host_numeric_authority, mode_truth]
+    disposition: Keep as a research artifact only; never embed or deploy as the production UI.
+  - id: PP-011
+    path: demos/lib.mjs::readCsv
+    prohibited_behavior: Minimal comma/newline split parser assumes well-formed local files and changes numeric tokens without raw-token provenance.
+    violates: [untrusted_ingestion, quoted_csv_support, raw_token_preservation]
+    disposition: Fixture helper only; WP-04 owns production ingestion.
+  - id: PP-012
+    path: out/** and local image URLs
+    prohibited_behavior: Mutable local files and sequential names stand in for tenant-scoped immutable object records and authorized downloads.
+    violates: [immutable_storage, tenant_scope, retention, signed_access]
+    disposition: Preserve existing evidence; production artifacts use object records and authorized grants.
+  - id: PP-013
+    path: agent/main.py and agent/fast_track.py model environment variables
+    prohibited_behavior: Environment/client-selected provider strings bypass a server-signed model catalog and classification/region policy.
+    violates: [model_route_policy, egress_policy, reproducibility]
+    disposition: External model routes remain disabled pending OI-002 and OI-007; WP-06 owns the catalog.
+  - id: PP-014
+    path: package.json scripts.test and absent test suites
+    prohibited_behavior: The default test command intentionally fails and no deterministic contract/security/recovery gates exist.
+    violates: [release_evidence, regression_gates]
+    disposition: No POC artifact may be promoted; WP-01 creates the CI foundation.
+  - id: PP-015
+    path: demos/05-scale-probe.mjs
+    prohibited_behavior: Random, unseeded synthetic data and manual timings are used as capacity evidence.
+    violates: [reproducible_performance_evidence]
+    disposition: Treat observations as exploratory only; WP-13/WP-14 use versioned workloads and machine-readable results.
+  - id: PP-016
+    path: REPORT.md recommendations
+    prohibited_behavior: Treats Vanna as a long-term core, AVA candidates as truth, L7 as China-limited, and MCP/static PNG as a production primary path.
+    violates: [current_normative_architecture]
+    disposition: PRODUCTION_PLAN.md corrections and docs/production-spec/** take precedence; REPORT.md remains historical POC evidence.
+enforcement:
+  current_runtime_mutated: false
+  production_allowlist_contains_poc_paths: false
+  review_rule: Any reuse requires the owning future work package to place behavior behind typed contracts and prove its applicable gates.

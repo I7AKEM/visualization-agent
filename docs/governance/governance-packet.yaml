@@ -1,0 +1,57 @@
+schema_version: 1
+packet_id: WP-00
+title: Governance and baselines
+baseline_date: '2026-08-29'
+normative_sources:
+  - docs/production-spec/README.md
+  - docs/production-spec/01_DECISIONS_AND_ARCHITECTURE.md
+  - docs/production-spec/02_CONTRACTS_AND_STATE_MACHINES.md
+  - docs/production-spec/03_TEST_AND_FAILURE_MATRIX.md
+  - docs/production-spec/04_AGENT_EVAL_SPEC.md
+  - docs/production-spec/05_SECURITY_OPERATIONS_AND_DELIVERY.md
+  - docs/production-spec/06_TASK_DISPATCH_BRIEFS.md
+supporting_source: PRODUCTION_PLAN.md
+overall_status: input_required
+production_approved: false
+approval_summary:
+  engineering_baseline: recorded
+  organization_inputs: input_required
+  accountable_owners: input_required
+  accountable_reviewers: input_required
+  on_call: input_required
+  security_review: acceptance_required
+  product_review: acceptance_required
+  data_domain_review: acceptance_required
+  operations_review: acceptance_required
+records:
+  - docs/governance/owner-input-checklist.yaml
+  - docs/governance/poc-inventory.yaml
+  - docs/governance/prohibited-production-paths.yaml
+  - docs/governance/data-classification-acceptance.yaml
+  - docs/governance/retention-acceptance.yaml
+  - docs/governance/slo-acceptance.yaml
+  - docs/governance/limit-acceptance.yaml
+  - docs/governance/disabled-features.yaml
+  - docs/governance/requirements-traceability.yaml
+adrs:
+  - docs/adr/ADR-004-deployment-platform-and-region.md
+  - docs/adr/ADR-005-authoritative-saudi-boundaries.md
+  - docs/adr/ADR-006-governed-semantic-source.md
+  - docs/adr/ADR-008-identity-provider-and-policy-ownership.md
+evidence:
+  - docs/evidence/wp-00/README.md
+  - docs/evidence/wp-00/handoff.yaml
+entry_effect:
+  wp_01_owner_independent_scaffolding: allowed_after_integration_acceptance
+  production_deployment: disabled
+  owner_dependent_features: disabled
+exit_criteria:
+  approved_governance_packet: not_met
+  requirements_traceability_skeleton: met
+  poc_inventory: met
+  prohibited_path_register: met
+  missing_inputs_fail_closed: met
+notes:
+  - No organization-specific decision or approval was present in the repository at capture time.
+  - The packet is complete as an input/acceptance record but cannot represent owner approval.
+  - The disabled-feature register is authoritative until an approved ADR and acceptance update resolve each blocker.

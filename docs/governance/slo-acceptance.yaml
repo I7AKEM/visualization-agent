@@ -1,0 +1,50 @@
+schema_version: 1
+record_id: WP00-SLO
+status: engineering_baseline_recorded_owner_acceptance_required
+normative_source: docs/production-spec/05_SECURITY_OPERATIONS_AND_DELIVERY.md#5
+window: controlled_beta
+objectives:
+  - sli: authenticated_api_availability_excluding_valid_4xx
+    objective: 99.9_percent_monthly
+  - sli: command_acceptance
+    objective: p95_le_300_ms_and_p99_le_800_ms
+  - sli: first_status
+    objective: p95_le_500_ms
+  - sli: exact_render_first_shell_after_acceptance
+    objective: p95_le_1500_ms
+  - sli: exact_render_first_useful_rows_small_fixture
+    objective: p95_le_2500_ms
+  - sli: analysis_first_shell
+    objective: p95_le_2000_ms
+  - sli: small_golden_analysis_final
+    objective: p95_le_15000_ms_and_p99_le_30000_ms
+  - sli: sse_reconnect_to_converged_state
+    objective: p95_le_3000_ms
+  - sli: cancellation
+    objective: acknowledgement_p95_le_1000_ms_and_worker_termination_le_5000_ms
+  - sli: finalized_renderer_success
+    objective: ge_99.9_percent
+  - sli: accepted_background_job_eventual_completion
+    objective: ge_99.5_percent_excluding_user_and_data_policy_failures
+  - sli: exactness_numerical_tenant_security_critical_failure
+    objective: zero_tolerated_immediate_incident
+  - sli: trace_correlation_completeness_for_accepted_commands
+    objective: ge_99.9_percent_and_100_percent_for_errors_and_canaries
+recovery_objectives:
+  postgres_and_object_metadata_rpo: le_5_minutes
+  postgres_and_object_metadata_rto: le_60_minutes
+  committed_outbox_and_state: must_survive
+  redis_authoritative_rpo: not_applicable
+  restore_drill: quarterly_and_before_general_availability
+change_control:
+  phase_0_measurement_may: tighten
+  may_not: [relax_correctness, relax_security]
+  requires: [versioned_workload, measured_evidence, product_acceptance, operations_acceptance]
+required_input: OI-013
+acceptance:
+  product_owner: null
+  operations_owner: null
+  engineering_owner: null
+  security_reviewer: null
+  accepted_at: null
+production_effect: No beta or production SLO/RPO/RTO claim may be made before workload confirmation, capacity evidence, and named operational ownership.

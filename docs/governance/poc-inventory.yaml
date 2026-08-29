@@ -1,0 +1,121 @@
+schema_version: 1
+record_id: WP00-POC-INVENTORY
+captured_at: '2026-08-29'
+repository:
+  branch: feature/planner-fast-track
+  head: 4695e98916a760b1548eb862dc86b63d359ce7c8
+  production_implementation_started: false
+  tracked_runtime_edits_preserved:
+    - path: agent/fast_track.py
+      summary: User changed the default planner model to openrouter:qwen/qwen3.7-flash; WP-00 did not modify it.
+    - path: agent/main.py
+      summary: User changed the default agent model to openrouter:google/gemma-4-31b-it; WP-00 did not modify it.
+  untracked_material_present_before_wp_00:
+    - .agents/**
+    - .idea/**
+    - PRODUCTION_PLAN.md
+    - docs/production-spec/**
+    - out/mcp-*.png additions
+  ownership_statement: WP-00 adds only docs/governance/**, docs/adr/**, and docs/evidence/wp-00/**.
+runtimes_observed:
+  local_python: 3.12.14
+  python_requirement: pydantic-ai-slim[anthropic,openai,mcp]==2.35.3
+  python_transitive_lock: absent
+  local_node: 18.16.0
+  documented_node_minimum: 20
+  local_npm: 9.5.1
+  node_lockfile_version: 3
+  node_package_manager_policy: npm in POC; production pnpm policy belongs to WP-01
+node_dependencies:
+  - name: '@antv/ava'
+    manifest_range: ^3.4.1
+    locked_version: 3.4.1
+  - name: '@antv/gpt-vis-ssr'
+    manifest_range: ^0.3.8
+    locked_version: 0.3.8
+  - name: '@antv/mcp-server-chart'
+    manifest_range: ^0.9.10
+    locked_version: 0.9.10
+components:
+  - id: POC-COMP-001
+    paths: [demos/01-render-charts.mjs, demos/04-answer-bundle.mjs, demos/lib.mjs]
+    capability: Local deterministic CSV fixture aggregation and server-side AntV PNG experiments.
+    reusable_evidence: Arabic font/render fixtures and deterministic examples after review.
+    production_status: fixture_only
+  - id: POC-COMP-002
+    paths: [demos/02-insights.mjs]
+    capability: AVA candidate-insight and chart-advice experiment over in-memory rows.
+    reusable_evidence: Candidate-generation research only.
+    production_status: prohibited_as_truth_authority
+  - id: POC-COMP-003
+    paths: [demos/render-server.mjs]
+    capability: Loopback HTTP wrapper around gpt-vis-ssr that writes PNG files under out/.
+    reusable_evidence: Private-renderer compatibility fixture.
+    production_status: prohibited_until_reimplemented_and_hardened
+  - id: POC-COMP-004
+    paths: [demos/03-mcp-e2e.mjs]
+    capability: Stdio MCP handshake/tool-call experiment routed to the loopback renderer.
+    reusable_evidence: MCP compatibility fixture.
+    production_status: fixture_only
+  - id: POC-COMP-005
+    paths: [demos/05-scale-probe.mjs]
+    capability: Ad hoc AVA/render timing and visual-density probe with random synthetic data.
+    reusable_evidence: Qualitative research observation only; not reproducible load evidence.
+    production_status: benchmark_seed_only
+  - id: POC-COMP-006
+    paths: [agent/main.py]
+    capability: Pydantic AI smart path; sends CSV plus optional SQL/handoff text to a selected model and exposes MCP chart tools.
+    reusable_evidence: Agent/MCP wiring behavior.
+    production_status: prohibited
+  - id: POC-COMP-007
+    paths: [agent/fast_track.py, agent/.plan_cache.json]
+    capability: Single model plan over schema/five sample rows followed by in-process filter/aggregate/top-N/render logic and a global file cache.
+    reusable_evidence: Host-computes-numbers design principle and small typed Plan experiment.
+    production_status: prohibited_until_replaced_by_typed_contracts_and_tenant_scoped_execution
+  - id: POC-COMP-008
+    paths: [agent/web.py, agent/ui.html]
+    capability: Loopback Starlette UI with NDJSON streaming, local G2 rendering, direct CSV entry, and model/track selection.
+    reusable_evidence: Live-render interaction prototype.
+    production_status: prohibited
+  - id: POC-COMP-009
+    paths: [ui/chart-bench.html]
+    capability: Standalone client-side CSV profile/aggregate/G2/AVA demonstration using public CDNs.
+    reusable_evidence: Visual/interaction benchmark only.
+    production_status: prohibited
+  - id: POC-COMP-010
+    paths: [data/*.csv, fonts/*.ttf, out/*.png]
+    capability: Synthetic Arabic-oriented data, font assets, and rendered image evidence.
+    reusable_evidence: Candidate fixtures/assets pending provenance, license, deterministic-generation, and snapshot review.
+    production_status: review_required
+artifact_counts_observed:
+  png_files_total: 73
+  png_files_tracked: 37
+  png_files_untracked: 36
+state_and_storage:
+  metadata: process memory
+  planner_cache: agent/.plan_cache.json
+  uploads: browser/request body only
+  outputs: mutable local out/ directory
+  authoritative_database: absent
+  transactional_outbox: absent
+  tenant_workspace_scope: absent
+  immutable_object_store: absent
+security_and_operations:
+  authentication: absent
+  authorization: absent
+  tenant_isolation: absent
+  csrf_origin_policy: absent
+  production_request_limits: absent
+  renderer_authentication: absent
+  renderer_body_resource_limits: absent
+  structured_safe_errors: absent
+  telemetry_redaction_contract: absent
+  durable_jobs: absent
+  cancellation_persistence: absent
+  ci_release_pipeline: absent
+testing:
+  package_test_script: exits_1_no_tests
+  automated_python_tests: absent
+  contract_property_security_e2e_tests: absent
+  evidence_present: committed PNG experiments and manual wiring/scale scripts
+conclusion: No POC runtime path is approved for production traffic. Preserve useful fixtures and interaction research, but production work must use the normative contracts and work-package ownership.
