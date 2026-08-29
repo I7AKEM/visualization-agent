@@ -1,0 +1,105 @@
+schema_version: 1
+work_package: WP-00
+base_integration_commit: 4695e98916a760b1548eb862dc86b63d359ce7c8
+delivery_commit: f5d7ca5eb935314b917f61d27a41170ba107a390
+changed_paths:
+  - docs/adr/ADR-004-deployment-platform-and-region.md
+  - docs/adr/ADR-005-authoritative-saudi-boundaries.md
+  - docs/adr/ADR-006-governed-semantic-source.md
+  - docs/adr/ADR-008-identity-provider-and-policy-ownership.md
+  - docs/evidence/wp-00/README.md
+  - docs/evidence/wp-00/handoff.yaml
+  - docs/governance/README.md
+  - docs/governance/data-classification-acceptance.yaml
+  - docs/governance/disabled-features.yaml
+  - docs/governance/governance-packet.yaml
+  - docs/governance/limit-acceptance.yaml
+  - docs/governance/owner-input-checklist.yaml
+  - docs/governance/poc-inventory.yaml
+  - docs/governance/prohibited-production-paths.yaml
+  - docs/governance/requirements-traceability.yaml
+  - docs/governance/retention-acceptance.yaml
+  - docs/governance/slo-acceptance.yaml
+requirements:
+  - GOV-001
+  - GOV-002
+  - GOV-003
+  - GOV-004
+  - GOV-005
+  - GOV-006
+  - GOV-007
+  - GOV-008
+  - GOV-009
+  - GOV-010
+  - GOV-011
+  - GOV-012
+  - GOV-013
+  - GOV-014
+dependency_commits: {}
+commands_run:
+  - command: ruby -e 'require "yaml"; Dir["docs/governance/*.yaml"].sort.each { |f| YAML.load_file(f); puts "parsed #{f}" }'
+    exit_code: 0
+    result: Parsed all 10 governance YAML records before handoff creation.
+  - command: ruby -e 'require "yaml"; docs = Dir["docs/governance/*.yaml"].sort.to_h { |f| [f, YAML.load_file(f)] }; owners = docs.fetch("docs/governance/owner-input-checklist.yaml").fetch("inputs").map { |x| x.fetch("id") }; raise "duplicate owner ids" unless owners.uniq.length == owners.length; blockers = docs.fetch("docs/governance/disabled-features.yaml").fetch("features").flat_map { |x| x.fetch("blockers") }.uniq; raise "unknown blockers" unless (blockers - owners).empty?; reqs = docs.fetch("docs/governance/requirements-traceability.yaml").fetch("requirements").map { |x| x.fetch("id") }; raise "duplicate requirement ids" unless reqs.uniq.length == reqs.length; paths = docs.fetch("docs/governance/prohibited-production-paths.yaml").fetch("register").map { |x| x.fetch("id") }; raise "duplicate prohibited path ids" unless paths.uniq.length == paths.length; puts "PASS #{owners.length} inputs #{blockers.length} blockers #{reqs.length} requirements #{paths.length} prohibited paths"'
+    exit_code: 0
+    result: PASS 16 inputs 16 blockers 14 requirements 16 prohibited paths.
+  - command: ruby -e 'require "yaml"; d = YAML.load_file("docs/governance/data-classification-acceptance.yaml"); raise unless d.fetch("classes").map { |x| x.fetch("id") } == %w[public internal confidential restricted]; l = YAML.load_file("docs/governance/limit-acceptance.yaml").fetch("limits"); raise unless [l.fetch("upload_max_bytes").fetch("value"), l.fetch("dataset_max_rows"), l.fetch("dataset_max_columns"), l.fetch("dashboard_max_widgets"), l.fetch("concurrent_commands_per_user"), l.fetch("concurrent_commands_per_workspace"), l.fetch("default_analysis_deadline_ms"), l.fetch("default_export_deadline_ms")] == [262144000, 5000000, 200, 20, 10, 50, 120000, 180000]; puts "PASS classification and beta limits"'
+    exit_code: 0
+    result: PASS classification and beta limits.
+  - command: git diff --cached --check
+    exit_code: 0
+    result: No whitespace errors in the 16-file governance delivery commit.
+  - command: git diff --name-only 4695e98916a760b1548eb862dc86b63d359ce7c8 f5d7ca5eb935314b917f61d27a41170ba107a390
+    exit_code: 0
+    result: Exactly 16 files changed, all under docs/governance/**, docs/adr/**, or docs/evidence/wp-00/**.
+  - command: git diff 4695e98916a760b1548eb862dc86b63d359ce7c8 f5d7ca5eb935314b917f61d27a41170ba107a390 -- agent/fast_track.py agent/main.py
+    exit_code: 0
+    result: Empty diff; the two pre-existing modified POC runtime files were not changed by WP-00.
+  - command: ruby -e 'require "yaml"; h=YAML.load_file("docs/evidence/wp-00/handoff.yaml"); required=%w[schema_version work_package base_integration_commit delivery_commit changed_paths requirements dependency_commits commands_run tests_not_run eval_manifest_versions migrations configuration_keys secret_names telemetry_changes disabled_features known_risks rollback_steps critical_gates_passed reviewers_required]; missing=required-h.keys; abort "missing #{missing.join(",")}" unless missing.empty?; puts "PASS handoff required keys"'
+    exit_code: 0
+    result: PASS handoff required keys.
+tests_not_run:
+  - Organization owner/reviewer/on-call approvals were not available; the packet remains input_required and production is disabled.
+  - Integration-owner acceptance and green CI for the exact delivery commit require the integration task and CI environment.
+  - Runtime, provider, infrastructure, performance, security, and agent-eval suites are not applicable to this documentation-only work package and are not claimed.
+eval_manifest_versions: []
+migrations: []
+configuration_keys: []
+secret_names: []
+telemetry_changes: []
+disabled_features:
+  - DF-001
+  - DF-002
+  - DF-003
+  - DF-004
+  - DF-005
+  - DF-006
+  - DF-007
+  - DF-008
+  - DF-009
+  - DF-010
+  - DF-011
+  - DF-012
+  - DF-013
+known_risks:
+  - The WP-00 exit criterion requiring an approved governance packet is not met because organization inputs, named owners, reviewers, and on-call assignments are absent.
+  - The normative docs/production-spec/** package and PRODUCTION_PLAN.md were present but untracked at task start and are not part of the WP-00 delivery commit; the integration owner must place the normative sources in an accepted integration commit before accepting dependency evidence.
+  - The handoff schema requires a handoff embedded in a Git commit to contain that same commit SHA and match task HEAD. A Git commit cannot contain its own hash without circularity. This handoff names the substantive delivery commit and is committed as metadata immediately afterward; integration tooling must formalize a non-self-referential convention.
+rollback_steps:
+  - Revert the handoff metadata commit if present.
+  - Revert delivery commit f5d7ca5eb935314b917f61d27a41170ba107a390; no runtime, migration, configuration, secret, or persisted-data rollback is required.
+critical_gates_passed:
+  - WP00-YAML-PARSE
+  - WP00-REFERENCE-INTEGRITY
+  - WP00-CLASSIFICATION-AND-LIMIT-BASELINE
+  - WP00-OWNED-PATH-SCOPE
+  - WP00-POC-RUNTIME-PRESERVATION
+  - WP00-MISSING-INPUT-FAIL-CLOSED
+reviewers_required:
+  - integration_owner
+  - engineering_owner
+  - product_owner
+  - security_reviewer
+  - data_domain_reviewer
+  - legal_privacy_reviewer
+  - operations_owner
