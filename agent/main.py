@@ -155,6 +155,7 @@ def make_transport():
             "VIS_REQUEST_SERVER": f"http://127.0.0.1:{RENDER_PORT}",
             "DISABLED_TOOLS": DISABLED_TOOLS,
         },
+        log_file=ROOT / "mcp-server.log",  # the MCP server's stderr — read this when a connection 'just closes'
     )
 
 

@@ -141,7 +141,9 @@ async def run(request):
         walk(exc)
         msg = "  ⇦  ".join(parts)
         low = msg.lower()
-        if "tool" in low and ("support" in low or "no endpoints" in low or "404" in low):
+        if "invalid model" in low or "not a valid model" in low or "model_not_found" in low or "no allowed providers" in low:
+            msg += "  — check the slug on openrouter.ai/models (OpenRouter Claude slugs use dots, e.g. anthropic/claude-sonnet-4.6)"
+        elif "tool" in low and ("support" in low or "no endpoints" in low or "404" in low):
             msg += "  — this model likely does not support tool calling; pick a model with the 'tools' tag on openrouter.ai/models"
         elif "connection closed" in low and len(parts) <= 1:
             msg += "  — often masks a model that cannot do tool calling; try a tools-capable model"
