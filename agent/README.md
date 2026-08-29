@@ -56,6 +56,21 @@ live mapping (line, area, column, bar, pie, scatter have one) fall back to it.
 loop with a stub LLM (MCP calls and rendering still real). No extra Python
 deps — the UI runs on starlette/uvicorn, which pydantic-ai already installs.
 
+## Tracks — fast vs smart
+
+The UI has a **Track** switch:
+
+- **Smart (LLM)** — the full agent: model reads the handoff, decides, calls MCP
+  tools, streams the Arabic answer. Seconds; best quality.
+- **Fast (no LLM)** — deterministic code: profile → choose form (the handoff
+  `intent` wins) → aggregate → render → templated Arabic numbers. ~0.5 s
+  end-to-end, no API key, numbers always computed. `agent/fast_track.py`.
+- **Both** — fast result appears instantly, then the smart track streams in
+  behind it. The production pattern when latency matters: the executive sees a
+  chart in half a second and the considered narrative arrives after.
+
+Every run ends with `done · N ms` so tracks can be compared directly.
+
 ## Run it for real (CLI)
 
 ```sh

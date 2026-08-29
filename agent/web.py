@@ -20,6 +20,7 @@ import contextlib
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 import uvicorn
@@ -29,6 +30,7 @@ from starlette.routing import Route
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import fast_track  # noqa: E402  (the no-LLM deterministic track)
 import main as core  # noqa: E402  (shared transport, renderer, instructions)
 
 UI_PORT = int(os.environ.get("UI_PORT", "8300"))
@@ -103,6 +105,7 @@ async def run(request):
     question = (body.get("question") or "").strip() or "حلّل البيانات وقدّم أبرز النتائج للقيادة."
     model_str = (body.get("model") or core.MODEL).strip()
     handoff = {k: (body.get(k) or "").strip() for k in ("enriched", "intent", "sql", "notes")}
+    track = (body.get("track") or "smart").strip()  # fast | smart | both
 
     if not csv_text:
         return JSONResponse({"error": "CSV is empty"}, status_code=400)
@@ -115,41 +118,53 @@ async def run(request):
     def line(obj) -> str:
         return json.dumps(obj, ensure_ascii=False) + "\n"
 
+    async def smart_events():
+        t0 = time.perf_counter()
+        yield {"type": "status", "message": f"smart track: agent starting — model: {model_str}"}
+        agent = build_agent(model_str)
+        rows = csv_text.count("\n")
+        yield {"type": "status", "message": f"CSV handed to the model: ~{rows} rows, {len(csv_text)} chars"}
+        provided = [k for k, v in handoff.items() if v]
+        if provided:
+            yield {"type": "status", "message": "handoff from data agent: " + ", ".join(provided)}
+        prompt = core.build_prompt(csv_text, question, **handoff)
+        async with agent.run_stream_events(prompt) as events:
+            async for ev in events:
+                kind = type(ev).__name__
+                if kind == "FunctionToolCallEvent":
+                    args = ev.part.args
+                    if not isinstance(args, str):
+                        args = json.dumps(args, ensure_ascii=False)
+                    # full args — the UI renders the chart from them; it truncates for display itself
+                    yield {"type": "tool_call", "tool": ev.part.tool_name, "args": args[:200_000]}
+                elif kind == "FunctionToolResultEvent":
+                    yield {"type": "tool_result", "tool": ev.part.tool_name, "content": str(ev.part.content)[:600]}
+                elif kind == "PartStartEvent" and getattr(ev.part, "part_kind", "") == "text":
+                    if ev.part.content:
+                        yield {"type": "text", "delta": ev.part.content}
+                elif kind == "PartDeltaEvent":
+                    delta = getattr(ev.delta, "content_delta", None)
+                    if delta:
+                        yield {"type": "text", "delta": delta}
+                elif kind == "AgentRunResultEvent":
+                    usage = ev.result.usage
+                    yield {"type": "done", "input_tokens": usage.input_tokens,
+                           "output_tokens": usage.output_tokens,
+                           "ms": round((time.perf_counter() - t0) * 1000)}
+
     async def gen():
         if run_lock.locked():
             yield line({"type": "error", "message": "another run is already in progress"})
             return
         async with run_lock:
             try:
-                yield line({"type": "status", "message": f"agent starting — model: {model_str}"})
-                agent = build_agent(model_str)
-                rows = csv_text.count("\n")
-                yield line({"type": "status", "message": f"CSV handed to the model: ~{rows} rows, {len(csv_text)} chars"})
-                provided = [k for k, v in handoff.items() if v]
-                if provided:
-                    yield line({"type": "status", "message": "handoff from data agent: " + ", ".join(provided)})
-                prompt = core.build_prompt(csv_text, question, **handoff)
-                async with agent.run_stream_events(prompt) as events:
-                    async for ev in events:
-                        kind = type(ev).__name__
-                        if kind == "FunctionToolCallEvent":
-                            args = ev.part.args
-                            if not isinstance(args, str):
-                                args = json.dumps(args, ensure_ascii=False)
-                            # full args — the UI renders the chart from them; it truncates for display itself
-                            yield line({"type": "tool_call", "tool": ev.part.tool_name, "args": args[:200_000]})
-                        elif kind == "FunctionToolResultEvent":
-                            yield line({"type": "tool_result", "tool": ev.part.tool_name, "content": str(ev.part.content)[:600]})
-                        elif kind == "PartStartEvent" and getattr(ev.part, "part_kind", "") == "text":
-                            if ev.part.content:
-                                yield line({"type": "text", "delta": ev.part.content})
-                        elif kind == "PartDeltaEvent":
-                            delta = getattr(ev.delta, "content_delta", None)
-                            if delta:
-                                yield line({"type": "text", "delta": delta})
-                        elif kind == "AgentRunResultEvent":
-                            usage = ev.result.usage
-                            yield line({"type": "done", "input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens})
+                if track in ("fast", "both"):
+                    for e in fast_track.fast_events(csv_text, question, handoff,
+                                                    f"http://127.0.0.1:{core.RENDER_PORT}"):
+                        yield line(e)
+                if track in ("smart", "both"):
+                    async for e in smart_events():
+                        yield line(e)
             except Exception as e:  # surfaced in the UI, not swallowed
                 yield line({"type": "error", "message": f"{type(e).__name__}: {e}"})
 
