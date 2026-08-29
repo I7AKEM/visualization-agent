@@ -1,9 +1,13 @@
-"""Fast track — answer with a chart and numbers WITHOUT any LLM.
+"""Fast track v2 — planner-based: a small model DECIDES, code EXECUTES.
 
-Deterministic pipeline: profile the CSV, choose a form (the handoff intent wins
-when present), aggregate, render via the private renderer, and compose a short
-Arabic narrative from computed numbers. Milliseconds of compute + one render
-round-trip; the smart track (the LLM agent) exists for everything this can't do.
+Pure heuristics make stupid chart choices because chart choice depends on
+meaning, not column shapes. This track keeps intelligence but strips the
+latency sources: ONE single-shot structured-output call to a fast model gets
+only the schema + a few sample rows + the question (never the full CSV) and
+returns a validated plan. Code then filters, aggregates, renders, and writes
+the numbers. Decisions are cached by (schema + intent + question), so repeat
+questions plan in ~0 ms. The old heuristic survives only as a last-resort
+fallback when the planner is unavailable or returns an invalid plan.
 
 Emits the same event dicts the web UI already understands:
   status / tool_call / tool_result / text / done
@@ -12,18 +16,61 @@ Emits the same event dicts the web UI already understands:
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
+import json
+import os
 import re
 import time
+from pathlib import Path
+from typing import Literal, Optional
 
 import httpx
+from pydantic import BaseModel, Field
+
+PLANNER_MODEL = os.environ.get("PLANNER_MODEL", "openrouter:anthropic/claude-haiku-4.5")
+CACHE_FILE = Path(__file__).resolve().parent / ".plan_cache.json"
 
 AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 DATE_RE = re.compile(r"^\d{4}([-/]\d{1,2}){0,2}$|^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}$")
 TIME_NAMES = re.compile(r"^(month|date|year|week|day|quarter|شهر|سنة|تاريخ|ربع|أسبوع|يوم)$", re.I)
-MEASURE_NAMES = re.compile(r"(value|amount|count|total|transactions|قيمة|عدد|معاملات|إجمالي|مبلغ|سكان|population)", re.I)
 
 
+# ---------------------------------------------------------------- the plan --
+class Plan(BaseModel):
+    """What to draw and from which columns — the entire decision, nothing else."""
+
+    tool: Literal["column", "bar", "line", "area", "pie", "scatter", "kpi"]
+    y: str = Field(description="the measure column (numeric). For agg=count it may be any column.")
+    x: Optional[str] = Field(None, description="category or time column for the x axis; null for kpi")
+    group: Optional[str] = Field(None, description="optional series/split column (keep under ~8 series)")
+    filter: dict[str, str] = Field(default_factory=dict, description="equality filters, column -> value, ONLY when the question restricts the data")
+    agg: Literal["sum", "mean", "count"] = "sum"
+    top_n: int = Field(12, ge=1, le=30)
+    title: str = Field(description="chart title in the question's language")
+    axis_x_title: str = ""
+    axis_y_title: str = ""
+    kpi_label: str = Field("", description="for tool=kpi: the label under the number")
+
+
+PLANNER_INSTRUCTIONS = """\
+You plan ONE visualization for a government-executive data assistant. You get a
+column schema, a few sample rows, the user's question, and optionally an intent
+and the SQL that produced the data. Return only the plan.
+
+Rules:
+- Use EXACT column names from the schema. Never invent columns.
+- y must be a numeric column (unless agg=count). x is the category/time column.
+- Use `filter` only when the question restricts the data (a specific month,
+  region, service...). Equality filters only.
+- tool=kpi when a single number answers the question (totals, one row).
+- Prefer simple forms. line/area for change over time; column/bar for
+  comparison or ranking; pie only for shares across <= 6 categories.
+- Title and axis titles in the question's language (Arabic question -> Arabic titles).
+"""
+
+
+# ------------------------------------------------------------- small utils --
 def _num(s):
     s = str(s).strip().translate(AR_DIGITS).replace(",", "")
     try:
@@ -47,124 +94,240 @@ def profile(rows: list[dict]) -> dict:
             kind = "date"
         elif vals and nums / len(vals) > 0.9:
             kind = "number"
-        cols[name] = {"kind": kind, "distinct": len({str(v) for v in vals})}
+        cols[name] = {"kind": kind, "distinct": len({str(v) for v in vals}),
+                      "samples": [str(v) for v in vals[:3]]}
     return cols
 
 
-def choose(cols: dict, intent: str, n_rows: int) -> dict:
-    """Pick measure/time/dim and a chart form; intent (from the data agent) wins."""
+# ------------------------------------------------------------------- cache --
+def _load_cache() -> dict:
+    try:
+        return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+_CACHE = _load_cache()
+
+
+def cache_key(cols: dict, question: str, intent: str) -> str:
+    schema = "|".join(f"{c}:{p['kind']}" for c, p in sorted(cols.items()))
+    q = re.sub(r"\s+", " ", question.strip().lower())
+    return hashlib.sha256(f"{schema}\n{intent.strip().lower()}\n{q}".encode()).hexdigest()[:16]
+
+
+def _cache_store(key: str, plan: Plan) -> None:
+    _CACHE[key] = plan.model_dump()
+    try:
+        CACHE_FILE.write_text(json.dumps(_CACHE, ensure_ascii=False, indent=1), encoding="utf-8")
+    except Exception:
+        pass
+
+
+# ----------------------------------------------------------------- planner --
+async def run_planner(cols: dict, sample_rows: list[dict], question: str, handoff: dict) -> Plan:
+    from pydantic_ai import Agent
+
+    if PLANNER_MODEL == "test":  # sandbox/no-key mode: exercises the fallback path
+        from pydantic_ai.models.test import TestModel
+
+        model = TestModel()
+    else:
+        model = PLANNER_MODEL
+    agent = Agent(model, output_type=Plan, instructions=PLANNER_INSTRUCTIONS)
+    payload = {
+        "columns": {c: {"kind": p["kind"], "distinct": p["distinct"], "samples": p["samples"]} for c, p in cols.items()},
+        "sample_rows": sample_rows[:5],
+        "question": question,
+        "intent": handoff.get("intent") or None,
+        "enriched_question": handoff.get("enriched") or None,
+        "sql": handoff.get("sql") or None,
+    }
+    result = await agent.run(json.dumps(payload, ensure_ascii=False))
+    return result.output
+
+
+def validate_plan(plan: Plan, cols: dict) -> list[str]:
+    errs = []
+    names = set(cols)
+    for field in ("y", "x", "group"):
+        v = getattr(plan, field)
+        if v is not None and v not in names:
+            errs.append(f"{field}={v!r} is not a column")
+    for c in plan.filter:
+        if c not in names:
+            errs.append(f"filter column {c!r} does not exist")
+    if plan.agg != "count" and plan.y in names and cols[plan.y]["kind"] != "number":
+        errs.append(f"y={plan.y!r} is not numeric")
+    if plan.tool != "kpi" and plan.x is None:
+        errs.append("x is required unless tool=kpi")
+    if plan.tool == "scatter" and (plan.x not in names or cols[plan.x]["kind"] != "number"):
+        errs.append("scatter needs a numeric x")
+    return errs
+
+
+def heuristic_plan(cols: dict, question: str, intent: str, n_rows: int) -> Plan:
+    """Last-resort fallback only — shape-based guessing, known to be naive."""
     numbers = [c for c, p in cols.items() if p["kind"] == "number"]
-    dates = [c for c, p in cols.items() if p["kind"] == "date" or TIME_NAMES.match(c)]
+    dates = [c for c in cols if cols[c]["kind"] == "date" or TIME_NAMES.match(c)]
     texts = [c for c, p in cols.items() if p["kind"] == "text" and 2 <= p["distinct"] <= 60 and c not in dates]
-    measure = next((c for c in numbers if MEASURE_NAMES.search(c)), numbers[0] if numbers else None)
+    y = numbers[0] if numbers else next(iter(cols))
     time_col = dates[0] if dates else None
     dim = min(texts, key=lambda c: cols[c]["distinct"]) if texts else None
-
-    intent = (intent or "").strip().lower()
-    if intent == "kpi" or n_rows == 1 or (measure and not time_col and not dim):
-        form = "kpi"
-    elif intent == "trend" or (intent == "" and time_col):
-        form = "line" if time_col else "column"
-    elif intent in ("comparison", "ranking"):
-        form = "column"
-    elif intent == "distribution":
-        form = "pie" if dim and cols[dim]["distinct"] <= 6 else "column"
-    elif intent == "correlation" and len(numbers) >= 2:
-        form = "scatter"
+    if intent == "kpi" or n_rows == 1 or (not time_col and not dim):
+        tool, x = "kpi", None
+    elif time_col:
+        tool, x = "line", time_col
     else:
-        form = "line" if time_col else ("column" if dim else "kpi")
-    return {"form": form, "measure": measure, "time": time_col, "dim": dim}
+        tool, x = "column", dim
+    return Plan(tool=tool, y=y, x=x, group=dim if (tool == "line" and dim) else None,
+                title=question[:70] if question else y, axis_x_title=x or "", axis_y_title=y,
+                kpi_label=f"إجمالي {y}")
 
 
-def aggregate(rows, measure, key, group=None, other="أخرى"):
+# --------------------------------------------------------------- execution --
+def execute_plan(plan: Plan, rows: list[dict]) -> tuple[dict | None, dict | None, list[str]]:
+    """Returns (chart_spec, kpi_args, sentences). Numbers computed here, never by a model."""
+    if plan.filter:
+        rows = [r for r in rows
+                if all(str(r.get(c, "")).strip() == str(v).strip() for c, v in plan.filter.items())]
+    if not rows:
+        return None, None, ["لا توجد صفوف مطابقة للفلتر المطلوب."]
+
+    def val(r):
+        return 1.0 if plan.agg == "count" else _num(r.get(plan.y))
+
+    sentences: list[str] = []
+    if plan.tool == "kpi":
+        vals = [v for r in rows if (v := val(r)) is not None]
+        total = sum(vals) / len(vals) if plan.agg == "mean" and vals else sum(vals)
+        kpi = {"value": fmt(total), "label": plan.kpi_label or f"إجمالي {plan.y}", "context": plan.title}
+        sentences.append(f"{kpi['label']}: {kpi['value']}.")
+        return None, kpi, sentences
+
+    if plan.tool == "scatter":
+        data = [{"x": xv, "y": yv} for r in rows[:1500]
+                if (xv := _num(r.get(plan.x))) is not None and (yv := _num(r.get(plan.y))) is not None]
+        spec = {"type": "scatter", "data": data, "title": plan.title,
+                "axisXTitle": plan.axis_x_title or plan.x, "axisYTitle": plan.axis_y_title or plan.y}
+        sentences.append(f"مخطط انتشار لـ {len(data)} نقطة بين {plan.x} و{plan.y}.")
+        return spec, None, sentences
+
+    # aggregate y by x (and group)
     acc, order = {}, []
     for r in rows:
-        v = _num(r[measure])
+        v = val(r)
         if v is None:
             continue
-        k = (str(r[key]).strip(), str(r[group]).strip() if group else None)
+        k = (str(r.get(plan.x, "")).strip(), str(r.get(plan.group, "")).strip() if plan.group else None)
         if k not in acc:
-            acc[k] = 0
+            acc[k] = []
             order.append(k)
-        acc[k] += v
-    return [(k[0], k[1], acc[k]) for k in order]
+        acc[k].append(v)
+    agg = {k: (sum(vs) / len(vs) if plan.agg == "mean" else sum(vs)) for k, vs in acc.items()}
+
+    if plan.tool in ("line", "area"):
+        if plan.group:
+            g_tot = {}
+            for (x, g), v in agg.items():
+                g_tot[g] = g_tot.get(g, 0) + v
+            keep = set(sorted(g_tot, key=g_tot.get, reverse=True)[:8])
+            data = sorted([{"time": x, "value": round(v, 2), "group": g}
+                           for (x, g), v in agg.items() if g in keep], key=lambda d: d["time"])
+            top_series = sorted([d for d in data if d["group"] == max(g_tot, key=g_tot.get)], key=lambda d: d["time"])
+        else:
+            data = sorted([{"time": x, "value": round(v, 2)} for (x, _), v in agg.items()], key=lambda d: d["time"])
+            top_series = data
+        spec = {"type": plan.tool, "data": data, "title": plan.title,
+                "axisXTitle": plan.axis_x_title or plan.x, "axisYTitle": plan.axis_y_title or plan.y}
+        if len(top_series) >= 2:
+            a, b = top_series[0]["value"], top_series[-1]["value"]
+            pct = (b - a) / a * 100 if a else 0
+            who = f"{top_series[0].get('group')}: " if plan.group else ""
+            sentences.append(f"{who}{plan.y} {'ارتفع' if pct >= 0 else 'انخفض'} من {fmt(a)} إلى {fmt(b)} ({'+' if pct >= 0 else ''}{pct:.1f}%).")
+        return spec, None, sentences
+
+    # column / bar / pie
+    items = sorted([(x, v) for (x, _), v in agg.items()], key=lambda t: -t[1])
+    if len(items) > plan.top_n:
+        rest = sum(v for _, v in items[plan.top_n:])
+        items = items[:plan.top_n] + [("أخرى", rest)]
+    data = [{"category": k, "value": round(v, 2)} for k, v in items]
+    spec = {"type": plan.tool if plan.tool in ("column", "bar", "pie") else "column",
+            "data": data, "title": plan.title}
+    if spec["type"] != "pie":
+        spec.update({"axisXTitle": plan.axis_x_title or plan.x, "axisYTitle": plan.axis_y_title or plan.y})
+    total = sum(d["value"] for d in data)
+    if data and total:
+        top = data[0]
+        sentences.append(f"{top['category']} في الصدارة بقيمة {fmt(top['value'])} ({top['value']/total*100:.1f}% من الإجمالي البالغ {fmt(total)}).")
+        if len(data) > 1:
+            sentences.append(f"أدنى قيمة: {data[-1]['category']} ({fmt(data[-1]['value'])}).")
+    return spec, None, sentences
 
 
-def fast_events(csv_text: str, question: str, handoff: dict, render_url: str):
+# ------------------------------------------------------------ event stream --
+async def fast_events(csv_text: str, question: str, handoff: dict, render_url: str):
     t0 = time.perf_counter()
     rows = list(csv.DictReader(io.StringIO(csv_text)))
     if not rows:
         yield {"type": "error", "message": "fast track: could not read the CSV"}
         return
     cols = profile(rows)
-    pick = choose(cols, handoff.get("intent", ""), len(rows))
-    measure, time_col, dim, form = pick["measure"], pick["time"], pick["dim"], pick["form"]
-    if not measure:
-        yield {"type": "error", "message": "fast track: no numeric column found"}
-        return
-    title = question if question and len(question) <= 70 else f"{measure} حسب {dim or time_col or ''}"
+    intent = handoff.get("intent", "")
 
-    sentences: list[str] = []
-    spec = None
-
-    if form == "kpi":
-        total = sum(v for r in rows if (v := _num(r[measure])) is not None)
-        yield {"type": "status", "message": f"fast track: KPI — no chart needed ({len(rows)} rows)"}
-        yield {"type": "tool_call", "tool": "show_kpi", "args":
-               __import__("json").dumps({"value": fmt(total), "label": f"إجمالي {measure}",
-                                         "context": handoff.get("enriched") or question or ""}, ensure_ascii=False)}
-        yield {"type": "tool_result", "tool": "show_kpi", "content": "ok"}
-        sentences.append(f"إجمالي {measure}: {fmt(total)}.")
-    elif form == "line":
-        agg = aggregate(rows, measure, time_col, dim)
-        groups = {}
-        for t, g, v in agg:
-            groups.setdefault(g, 0)
-            groups[g] += v
-        top5 = sorted(groups, key=groups.get, reverse=True)[:5] if dim else [None]
-        data = sorted(
-            [{"time": t, "value": round(v, 2), **({"group": g} if dim else {})}
-             for t, g, v in agg if g in top5],
-            key=lambda d: d["time"])
-        spec = {"type": "line", "data": data, "title": title, "axisXTitle": time_col, "axisYTitle": measure}
-        first, last = data[0], [d for d in data if not dim or d.get("group") == top5[0]][-1]
-        top_series = [d for d in data if not dim or d.get("group") == top5[0]]
-        if len(top_series) >= 2:
-            a, b = top_series[0]["value"], top_series[-1]["value"]
-            pct = (b - a) / a * 100 if a else 0
-            who = f"{top5[0]}: " if dim else ""
-            sentences.append(f"{who}{measure} {'ارتفع' if pct >= 0 else 'انخفض'} من {fmt(a)} إلى {fmt(b)} ({'+' if pct >= 0 else ''}{pct:.1f}%).")
-    else:  # column / pie / scatter share the categorical path
-        key = dim or time_col
-        agg = sorted(aggregate(rows, measure, key), key=lambda x: -x[2])
-        if len(agg) > 12:
-            rest = sum(v for _, _, v in agg[12:])
-            agg = agg[:12] + [("أخرى", None, rest)]
-        data = [{"category": k, "value": round(v, 2)} for k, _, v in agg]
-        chart_type = "pie" if form == "pie" else "column"
-        spec = {"type": chart_type, "data": data, "title": title}
-        if chart_type == "column":
-            spec.update({"axisXTitle": key, "axisYTitle": measure})
-        total = sum(d["value"] for d in data)
-        top = data[0]
-        sentences.append(f"{top['category']} في الصدارة بقيمة {fmt(top['value'])} ({top['value']/total*100:.1f}% من الإجمالي البالغ {fmt(total)}).")
-        if len(data) > 1:
-            sentences.append(f"أدنى قيمة: {data[-1]['category']} ({fmt(data[-1]['value'])}).")
-
-    if spec:
-        import json as _json
-        tool = f"generate_{spec['type']}_chart"
-        yield {"type": "status", "message":
-               f"fast track: intent={handoff.get('intent') or 'auto'} → {spec['type']} · {len(rows)} rows → {len(spec['data'])} points"}
-        yield {"type": "tool_call", "tool": tool, "args": _json.dumps(spec, ensure_ascii=False)}
+    plan, source, plan_ms = None, None, 0
+    key = cache_key(cols, question, intent)
+    if key in _CACHE:
         try:
-            resp = httpx.post(render_url, json=spec, timeout=30)
+            plan, source = Plan.model_validate(_CACHE[key]), "cache"
+        except Exception:
+            plan = None
+    if plan is None:
+        tp = time.perf_counter()
+        try:
+            plan = await run_planner(cols, rows[:5], question, handoff)
+            plan_ms = round((time.perf_counter() - tp) * 1000)
+            errs = validate_plan(plan, cols)
+            if errs:
+                yield {"type": "status", "message": "planner returned an invalid plan (" + "; ".join(errs) + ") → heuristic fallback"}
+                plan, source = None, None
+            else:
+                source = "planner"
+                _cache_store(key, plan)
+        except Exception as e:
+            plan_ms = round((time.perf_counter() - tp) * 1000)
+            yield {"type": "status", "message": f"planner unavailable ({type(e).__name__}) → heuristic fallback"}
+    if plan is None:
+        plan, source = heuristic_plan(cols, question, intent, len(rows)), "heuristic"
+        if validate_plan(plan, cols):
+            yield {"type": "error", "message": "fast track: no usable plan for this CSV"}
+            return
+
+    label = {"cache": "plan cache hit · 0 ms planning",
+             "planner": f"planned by {PLANNER_MODEL.split(':')[-1]} · {plan_ms} ms",
+             "heuristic": "heuristic fallback (naive)"}[source]
+    yield {"type": "status", "message": f"fast track: {label} → {plan.tool}"
+           + (f" · filter {plan.filter}" if plan.filter else "")}
+
+    spec, kpi, sentences = execute_plan(plan, rows)
+    if kpi:
+        yield {"type": "tool_call", "tool": "show_kpi", "args": json.dumps(kpi, ensure_ascii=False)}
+        yield {"type": "tool_result", "tool": "show_kpi", "content": "ok"}
+    elif spec:
+        tool = f"generate_{spec['type']}_chart"
+        yield {"type": "tool_call", "tool": tool, "args": json.dumps(spec, ensure_ascii=False)}
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(render_url, json=spec, timeout=30)
             body = resp.json()
             yield {"type": "tool_result", "tool": tool,
                    "content": body.get("resultObj") or body.get("errorMessage", "render failed")}
         except Exception as e:
             yield {"type": "tool_result", "tool": tool, "content": f"render failed: {e}"}
 
-    sentences.append("(المسار السريع: الأرقام محسوبة بالكود مباشرة، دون نموذج لغوي.)")
+    sentences.append({"cache": "(خطة معادة من الذاكرة، والتنفيذ بالكود.)",
+                      "planner": "(الخطة من نموذج سريع، والأرقام محسوبة بالكود.)",
+                      "heuristic": "(مسار احتياطي تقريبي — الأرقام محسوبة بالكود.)"}[source])
     yield {"type": "text", "delta": " ".join(sentences)}
-    yield {"type": "done", "ms": round((time.perf_counter() - t0) * 1000)}
+    yield {"type": "done", "ms": round((time.perf_counter() - t0) * 1000), "plan_ms": plan_ms}

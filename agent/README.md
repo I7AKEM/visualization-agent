@@ -62,9 +62,15 @@ The UI has a **Track** switch:
 
 - **Smart (LLM)** — the full agent: model reads the handoff, decides, calls MCP
   tools, streams the Arabic answer. Seconds; best quality.
-- **Fast (no LLM)** — deterministic code: profile → choose form (the handoff
-  `intent` wins) → aggregate → render → templated Arabic numbers. ~0.5 s
-  end-to-end, no API key, numbers always computed. `agent/fast_track.py`.
+- **Fast (planner)** — a small model DECIDES, code EXECUTES: one single-shot
+  structured-output call (schema + 5 sample rows + question, never the full
+  CSV) returns a validated plan — chart form, columns, equality filters,
+  top-N, titles — then code filters/aggregates/renders and templates the
+  Arabic numbers. Plans are cached by (schema + intent + question), so repeat
+  questions plan in 0 ms. The old shape-based heuristic survives only as a
+  labeled last-resort fallback. `PLANNER_MODEL` env picks the planner
+  (default `openrouter:anthropic/claude-haiku-4.5` — change the slug if
+  OpenRouter renames it). `agent/fast_track.py`.
 - **Both** — fast result appears instantly, then the smart track streams in
   behind it. The production pattern when latency matters: the executive sees a
   chart in half a second and the considered narrative arrives after.

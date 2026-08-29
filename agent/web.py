@@ -159,8 +159,8 @@ async def run(request):
         async with run_lock:
             try:
                 if track in ("fast", "both"):
-                    for e in fast_track.fast_events(csv_text, question, handoff,
-                                                    f"http://127.0.0.1:{core.RENDER_PORT}"):
+                    async for e in fast_track.fast_events(csv_text, question, handoff,
+                                                          f"http://127.0.0.1:{core.RENDER_PORT}"):
                         yield line(e)
                 if track in ("smart", "both"):
                     async for e in smart_events():
