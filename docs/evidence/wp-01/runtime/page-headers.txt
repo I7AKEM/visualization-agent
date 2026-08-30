@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+x-nextjs-cache: HIT
+x-nextjs-prerender: 1
+x-nextjs-prerender: 1
+x-nextjs-stale-time: 300
+X-Powered-By: Next.js
+Cache-Control: s-maxage=31536000
+ETag: "fp6k20hoiq3m0"
+Content-Type: text/html; charset=utf-8
+Content-Length: 4680
+Date: Sun, 30 Aug 2026 13:02:38 GMT
+Connection: close

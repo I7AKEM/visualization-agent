@@ -1,0 +1,50 @@
+schema_version: 1
+record_type: wp_01_owned_and_authorized_path_scope
+work_package: WP-01
+assignment_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+production_approved: false
+primary_ownership:
+  specification: docs/production-spec/06_TASK_DISPATCH_BRIEFS.md
+  matrix_rule: section 3, WP-01 row
+  paths:
+    - root manifests and locks
+    - .github/**
+    - apps/**, services/**, and packages/** empty scaffolds
+    - infra/dev/**
+    - docs/evidence/wp-01/**
+adjacent_scope_basis:
+  - paths: tests/**
+    basis: Section 3 expressly permits tests beside owned code; these are foundation-only tests.
+  - paths: schemas/handoff-v1.schema.json and schemas/integration-acceptance-v1.schema.json
+    basis: Section 5 expressly assigns both generated evidence schemas to WP-01.
+  - paths: scripts/**
+    basis: >-
+      The scoped assignment authorizes the CI foundation. These scripts implement only locked
+      compatibility, build, policy, security, SBOM, reproducibility, and evidence gates used by
+      the WP-01-owned workflows and root package scripts.
+  - paths: datasets/**, docs/runbooks/**, and infra outside infra/dev/**
+    basis: >-
+      The implementation delegation explicitly required empty monorepo scaffolds. These paths
+      contain README placeholders only and create no WP-06, WP-13, deployment, observability,
+      production, dataset, or runtime behavior. Their future owning work packages retain full
+      authority over implementation.
+  - paths: .gitattributes, .gitignore, REPRODUCIBILITY.md, SECURITY.md
+    basis: >-
+      Repository-level policy files are necessary outputs of the assigned monorepo, CI,
+      reproducibility, and security foundation and do not implement product behavior.
+integration_owned_paths_excluded:
+  base_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+  paths:
+    - docs/evidence/integration/execution-authorization.yaml
+    - docs/evidence/integration/wp-01-assignment.yaml
+    - docs/production-spec/03_TEST_AND_FAILURE_MATRIX.md
+    - docs/production-spec/06_TASK_DISPATCH_BRIEFS.md
+  verification: >-
+    The lineage-corrected substantive delivery is created directly on 804122a and keeps the four
+    base blobs byte-for-byte. The divergent c3577c3 reference is used only as a file-level source;
+    its common ancestor with the accepted base is 0aca58ba.
+boundary_assertions:
+  - WP-02 and WP-13 implementation did not start.
+  - All 13 disabled features remain disabled.
+  - No model credential, live provider call, deployment, or production access was added.
+  - Preserved POC runtime and out/** were not modified.

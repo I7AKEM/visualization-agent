@@ -1,0 +1,68 @@
+schema_version: 1
+record_type: wp_01_independent_reviews
+work_package: WP-01
+base_integration_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+recorded_at: 2026-08-30
+production_approved: false
+reviews:
+  - reviewer: path_overlap_review
+    mode: independent_read_only
+    verdict: passed
+    scope: implementation_path_overlap_and_integration_base_preservation
+    findings:
+      - >-
+        The common ancestor to corrected-reference comparison contains 128 WP-01 delivery paths;
+        127 are substantive delivery paths and handoff.yaml is correctly deferred to the
+        handoff-only child commit.
+      - >-
+        The common ancestor to integration-base comparison contains exactly four disjoint paths:
+        execution-authorization.yaml, wp-01-assignment.yaml, production-spec 03, and
+        production-spec 06.
+      - >-
+        All four integration-base blobs remain byte-identical to commit 804122a, with hashes
+        2bcaf0dc7eb2a8732a75d170d0202bd1d65cd371,
+        b8e1cc14a511fb506a9fa60577a2ca0b849d53e6,
+        ce9538d90227a8cc233f90cbd066edf5513e490c, and
+        2b3125c0c843818d11cc07a0abfeeab362f03c10.
+      - >-
+        agent/fast_track.py, agent/main.py, and out remain unchanged from the integration base;
+        no .DS_Store, .agents, or .idea path is introduced by this delivery.
+      - >-
+        The adjacent inert datasets, runbooks, and infra README scaffolds are consistent with
+        WP-01's assigned complete monorepo foundation and do not implement a later work package.
+    blockers: []
+  - reviewer: security_runtime_review
+    mode: independent_read_only
+    verdict: passed
+    scope: tests_security_workflows_sbom_reproducibility_and_local_runtime
+    corrections_required_and_retested:
+      - >-
+        Runtime evidence was aligned to its durable trace at port 34110 and the recorded
+        next.config timing of 11ms.
+      - >-
+        Prior hosted and preflight evidence was explicitly scoped to the divergent historical
+        lineage and cannot validate the new delivery.
+      - >-
+        Dependency Review now denies GPL-1.0-only and GPL-1.0-or-later in parity with the local
+        fail-closed AGPL/GPL/SSPL validators; an exact deny-set regression test was added.
+    results:
+      ci_policy_tests: 53 passed
+      full_pytest: 58 passed
+      workflows: 4 workflows and 7 immutable action pins passed
+      locks: only undici 7.29.0 and 8.10.0; no undici 7.28.0
+      python_static_security: Ruff format/lint, strict mypy, Bandit, and secret history passed
+      model_block: real model requests disabled and provider credential variables absent
+      runtime: page and client asset HTTP 200; SIGINT 130; no forced kill or listener
+      trivy_vulnerability_secret_misconfiguration_sha256: 6d5406e91fbfb7007cf261c5e2f76ee2f00abb1216cb073ec21b5d8a3288ff2a
+      trivy_license_sha256: 61822c1882e690b85b0359ff5408faa6046bda1249b0c392bf3a0f34a6816da3
+      node_sbom_sha256: b8ee306780f72efe9390483035eaec7c663879d36a05c691dfbe0d452b0cb80b
+      python_sbom_sha256: 0ff038cba0f5d005b1a481c39faf61bb6f6d33bdb79bddf8da9853b79513ebed
+      runtime_checksum_manifest_sha256: 4651c13485d34503f6bdfc06b88dbed91867542f49338072806f38b9998cfd53
+    exact_delivery_boundary: >-
+      Exact-delivery double-clean reproducibility is rerun only after the substantive commit;
+      its resulting hashes belong in the handoff-only child. Hosted validation remains pending.
+    blockers: []
+combined_verdict: passed_for_substantive_delivery_commit
+acceptance_boundary: >-
+  These independent local reviews do not authorize publication, hosted execution, or integration
+  acceptance. Exact-head hosted validation and integration-owner acceptance remain mandatory.

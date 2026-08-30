@@ -1,0 +1,175 @@
+schema_version: 1
+record_type: wp_01_lineage_corrected_local_gates
+work_package: WP-01
+base_integration_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+recorded_at: 2026-08-30
+status: local_and_offline_scan_gates_passed_external_exact_head_gates_pending
+production_approved: false
+toolchains:
+  node: 24.20.0
+  pnpm: 10.34.5 through Corepack
+  python: 3.12.14
+  uv: 0.12.7
+  trivy: 0.73.0
+frozen_environments:
+  - command: >-
+      UV_CACHE_DIR=/private/tmp/wp01-uv-cache uv sync --offline --frozen
+      --all-packages --group dev --python /opt/homebrew/bin/python3.12
+    exit_code: 0
+    result: 161 locked Python packages installed for five workspace members.
+  - command: >-
+      corepack pnpm install --offline --frozen-lockfile
+      --store-dir <existing-local-wp01-store>
+    exit_code: 0
+    result: 789 locked Node packages reused locally; zero downloads; unrs-resolver build script remained blocked.
+node_quality:
+  command: NEXT_TELEMETRY_DISABLED=1 CI=true corepack pnpm verify
+  exit_code: 0
+  results:
+    runtime_and_peer_pins: passed
+    eslint: passed
+    strict_typescript: passed
+    foundation_tests: 4 passed
+    web_unit_and_compatibility_tests: 4 passed
+    package_builds: passed
+    next_production_build: passed
+python_quality:
+  - command: .venv/bin/pytest -q
+    exit_code: 0
+    result: 58 passed, including 53 focused CI and package-manager policy tests
+  - command: .venv/bin/ruff format --check .
+    exit_code: 0
+    result: 69 Python files already formatted at the recorded run.
+  - command: .venv/bin/ruff check .
+    exit_code: 0
+    result: all checks passed
+  - command: .venv/bin/mypy services packages
+    exit_code: 0
+    result: strict mypy found no issues in five source files
+  - command: .venv/bin/bandit -q -r services packages
+    exit_code: 0
+    result: no Bandit findings
+python_build:
+  command: SOURCE_DATE_EPOCH=315532800 uv build --all-packages
+  first_attempt:
+    exit_code: 2
+    result: sandbox DNS blocked the exact Hatchling build backend fetch
+  authorized_retest:
+    exit_code: 0
+    result: >-
+      Source distributions and py3-none-any wheels built for API, contracts, evals,
+      analysis worker, and export worker.
+python_vulnerability_audit:
+  command: scripts/ci/audit_python_lock.sh
+  exit_code: 0
+  result: no known vulnerabilities found for the exact exported uv lock
+node_advisory_api_audits:
+  commands:
+    - corepack pnpm audit:prod
+    - corepack pnpm audit:lock
+  sandbox_attempt_exit_code: 1
+  sandbox_result: npm advisory POST failed DNS resolution
+  authorized_retest: rejected_by_host_policy
+  reason: >-
+    The host approval reviewer classified the npm advisory POST as external communication under
+    the offline/no-external-communication constraint. No bypass or suppression was attempted.
+  replacement_local_evidence: >-
+    Offline Trivy scanned the complete current pnpm and uv locks/environments; hosted Node audit
+    remains mandatory for the exact handoff.
+schema_evidence_workflow_lock_policy:
+  - command: .venv/bin/python scripts/ci/validate_evidence.py
+    exit_code: 0
+    result: one pre-existing handoff, one acceptance record, both schemas, and Git relationships passed
+  - command: .venv/bin/python scripts/ci/validate_workflows.py
+    exit_code: 0
+    result: four workflows, seven immutable action pins, and fixed runners passed
+  - command: .venv/bin/python scripts/ci/verify_lockfiles.py
+    exit_code: 0
+    result: >-
+      pnpm-only and uv lock policy passed; only undici 7.29.0 and 8.10.0 are resolved;
+      the preserved POC npm lock matched its frozen hash.
+  - command: .venv/bin/python scripts/ci/scan_secrets.py --history
+    exit_code: 0
+    result: current repository text and Git patch history passed without echoing values
+  - command: >-
+      PYTHONPATH=scripts/ci/model_block ALLOW_MODEL_REQUESTS=false
+      PYDANTIC_AI_ALLOW_MODEL_REQUESTS=false python scripts/ci/assert_model_block.py
+    exit_code: 0
+    result: real model requests blocked and provider credential names absent
+sbom_and_license:
+  commands:
+    - corepack pnpm sbom
+    - cyclonedx-py environment --output-format JSON --output-file artifacts/sbom/python.cdx.json
+    - scripts/ci/normalize_sbom.py
+    - scripts/ci/validate_sbom.py
+    - scripts/ci/validate_licenses.py
+  exit_code: 0
+  node:
+    component_count: 883
+    components_with_generator_license_metadata: 697
+    sha256: b8ee306780f72efe9390483035eaec7c663879d36a05c691dfbe0d452b0cb80b
+  python:
+    component_count: 161
+    components_with_generator_license_metadata: 154
+    sha256: 0ff038cba0f5d005b1a481c39faf61bb6f6d33bdb79bddf8da9853b79513ebed
+  checksum_summary_sha256: 2e91a1676fd06bda9de0fa10043721deae0ef9c029c4cf8e00f8aa5634a4657c
+  license_result: >-
+    857 component records reviewed, all 47 direct declarations and 48 exact evidence
+    records present, no provisionally denied license; 182 generator metadata gaps remain
+    visible and require hosted Dependency Review.
+offline_trivy:
+  vulnerability_secret_misconfiguration:
+    command_mode: --skip-db-update --skip-check-update --offline-scan
+    exit_code: 0
+    json_sha256: 6d5406e91fbfb7007cf261c5e2f76ee2f00abb1216cb073ec21b5d8a3288ff2a
+    pnpm_packages: 883
+    uv_packages: 168
+    high_critical_vulnerabilities: 0
+    misconfigurations: 0
+    secrets: 0
+    undici_versions: [7.29.0, 8.10.0]
+  fail_closed_license:
+    command: trivy rootfs --scanners license followed by scripts/ci/validate_trivy.py
+    exit_code: 0
+    json_sha256: 61822c1882e690b85b0359ff5408faa6046bda1249b0c392bf3a0f34a6816da3
+    license_records: 1342
+    node_packages: 1094
+    python_packages: 156
+    denied_agpl_gpl_sspl: 0
+local_runtime:
+  build_command: >-
+    NEXT_TELEMETRY_DISABLED=1 NEXT_BUILD_ID=wp01-lineage-correction-precommit
+    corepack pnpm --filter @visualization-agent/web build
+  first_capture_attempt:
+    exit_code: 1
+    result: default sandbox denied loopback listen with EPERM; no listener remained
+  authorized_capture_retest:
+    exit_code: 0
+    port: 34110
+    page_status: HTTP/1.1 200 OK
+    page_bytes: 4680
+    page_sha256: b1e3fc6d4734244cb552187215cddb43f1c707f4191145818c6692ba5bcd3279
+    client_asset_status: HTTP/1.1 200 OK
+    client_asset_bytes: 16891
+    client_asset_sha256: 6b1d5556b9a152c3cda207b3c932c8b4018b0a83da91e911d32aba98a60c9502
+    shutdown_exit_code: 130
+    forced_kill: false
+    listener_remaining: false
+    trace_sha256: fbc2a03be033b21f9a90cb433552df500f1da13e1abddf0e869e53105ba5d736
+    checksum_manifest_sha256: 4651c13485d34503f6bdfc06b88dbed91867542f49338072806f38b9998cfd53
+  python_boundary_imports:
+    exit_code: 0
+    result: API, analysis-worker, and export-worker empty package boundaries imported
+reproducibility:
+  precommit_result: passed
+  result_scope: >-
+    The first two-clean-build pass proved the reconstructed foundation before final evidence
+    annotations. The final exact delivery is rerun after the substantive commit and its hashes
+    are recorded in the submitted handoff, avoiding a self-changing source-identity claim.
+hosted_boundary:
+  new_exact_head_validated: false
+  push_performed: false
+  pull_request_changed: false
+  workflow_dispatched: false
+  prior_pr_1_pr_2_pr_3_evidence: historical_reference_only
+  required_next_step: owner-authorized publication followed by all exact-head hosted workflows

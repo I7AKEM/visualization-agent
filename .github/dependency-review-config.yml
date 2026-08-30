@@ -1,0 +1,18 @@
+fail_on_severity: high
+vulnerability_check: true
+license_check: true
+deny_licenses:
+  - AGPL-1.0-only
+  - AGPL-1.0-or-later
+  - AGPL-3.0-only
+  - AGPL-3.0-or-later
+  - GPL-1.0-only
+  - GPL-1.0-or-later
+  - GPL-2.0-only
+  - GPL-2.0-or-later
+  - GPL-3.0-only
+  - GPL-3.0-or-later
+  - SSPL-1.0
+retry_on_snapshot_warnings: true
+retry_on_snapshot_warnings_timeout: 60
+warn_only: false
