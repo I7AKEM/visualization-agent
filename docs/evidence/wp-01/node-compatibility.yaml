@@ -1,0 +1,107 @@
+schema_version: 1
+work_package: WP-01
+recorded_at: 2026-08-29
+compatibility_claims:
+  - id: node-runtime-pin
+    status: passed
+    basis:
+      - Node 24.20.0 satisfies Next.js 16.3.3 node >=20.9.0
+      - Node 24.20.0 satisfies ai 7.0.83 and @ai-sdk/react 4.0.86 node >=22
+      - pnpm 10.34.5 supports node >=18.12
+    gate: node scripts/check-runtime-pins.mjs
+  - id: declared-peer-graph
+    status: passed
+    basis:
+      - React 19.2.8 is accepted by Next.js 16.3.3
+      - React 19.2.8 is accepted by @ai-sdk/react 4.0.86
+      - Ant Design 6.4.5 is accepted by @ant-design/x 2.8.0
+      - React and React DOM 19.2.8 are accepted by Ant Design X 2.8.0 and Ant Design 6.4.5
+      - "@ai-sdk/react 4.0.86 requires ai 7.0.83 exactly"
+    installed_gate: corepack pnpm run check:peers
+    installed_gate_status: passed
+  - id: next-production-build
+    status: passed
+    gate: corepack pnpm run build
+  - id: typescript-source-gate
+    status: passed
+    gate: corepack pnpm run typecheck
+    configuration:
+      strict: true
+      no_emit: true
+      app_lib: ES2024
+      skip_lib_check: true
+    rationale: The initial nonstandard skipLibCheck false gate rejected declaration internals of the exact accepted Next/Ant Design dependency graph (rc-component variance and JSX surfaces, optional mermaid/react-syntax-highlighter declarations, and Next PromiseWithResolvers). Next-style skipLibCheck true keeps strict checking on repository source without treating dependency declaration implementation details as application errors. The Vitest-specific jest-dom type entry prevents an undeclared Jest global dependency.
+  - id: react-hydration
+    status: passed
+    gate: corepack pnpm --filter @visualization-agent/web test:compat
+    scope: React 19.2.8 SSR/hydration with Ant Design X 2.8.0 and Ant Design 6.4.5
+  - id: ai-sdk-reference-stream
+    status: passed
+    gate: corepack pnpm --filter @visualization-agent/web test:compat
+    fixture: tests/compatibility/fixtures/ai-sdk-7-reference.sse
+    covers:
+      - text stream parts
+      - custom data-run-status part
+      - tool input lifecycle
+      - tool approval requested state
+      - tool output denied terminal state
+      - SSE DONE marker
+  - id: pydantic-2.36-ai-sdk-7-exact-runtime
+    status: passed
+    required_backend: pydantic-ai 2.36.0 VercelAIAdapter
+    required_frontend: ai 7.0.83 and @ai-sdk/react 4.0.86
+    fixtures:
+      - tests/compatibility/fixtures/pydantic-ai-2.36.0-text-custom.sse
+      - tests/compatibility/fixtures/pydantic-ai-2.36.0-hitl.sse
+    backend_gate: uv run pytest -q tests/compatibility/python/test_vercel_ai_adapter.py
+    frontend_gate: corepack pnpm --filter @visualization-agent/web test:compat
+    result: >-
+      Pydantic AI 2.36.0 generated deterministic SDK-7 SSE for text, typed custom data,
+      and a deferred approval request; AI SDK 7.0.83 consumed both exact fixtures.
+    fallback: Not activated; the exact AI SDK 7 contract passed.
+    adapter_written: false
+primary_sources:
+  - https://nextjs.org/docs/app/getting-started/installation
+  - https://react.dev/reference/react-dom/client/hydrateRoot
+  - https://ai-sdk.dev/docs/ai-sdk-ui/stream-protocol
+  - https://ai-sdk.dev/docs/reference/ai-sdk-ui/read-ui-message-stream
+  - https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-tool-usage
+  - https://x.ant.design/components/bubble/
+  - https://ai.pydantic.dev/ui/vercel-ai/
+executed_no_network:
+  - command: /private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin/node scripts/check-runtime-pins.mjs
+    result: passed
+    output: "runtime pins verified: node 24.20.0, pnpm 10.34.5"
+  - command: /private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin/node --test --test-name-pattern='runtime|contract|protocol' tests/compatibility/node/foundation.test.mjs
+    result: passed
+    summary: 3 passed, 0 failed
+executed_post_install:
+  - command: corepack pnpm install --lockfile-only
+    result: passed_after_eslint_peer_correction
+    note: Strict peer resolution rejected ESLint 10.5.0, so the manifest was corrected to the official ESLint 9 maintenance release 9.39.5 before the production lock was accepted.
+  - command: corepack pnpm install --frozen-lockfile
+    result: passed
+  - command: corepack pnpm run check:runtime
+    result: passed
+  - command: corepack pnpm run check:peers
+    result: passed
+  - command: corepack pnpm -r --if-present lint
+    result: passed
+  - command: corepack pnpm -r --if-present typecheck
+    result: passed
+  - command: corepack pnpm --filter @visualization-agent/web test:compat
+    result: passed
+    summary: 2 test files passed, 4 tests passed including exact Pydantic AI 2.36.0 custom-data and HITL fixtures
+  - command: corepack pnpm run test:foundation
+    result: passed
+    summary: 4 passed, 0 failed
+  - command: corepack pnpm -r --if-present build
+    result: passed
+    summary: Next.js 16.3.3 production build compiled, typechecked, collected data, and generated 3 of 3 static pages; empty package build gates also passed.
+security_and_sbom_results:
+  - command: corepack pnpm audit --prod --audit-level high
+    result: passed
+    summary: No known vulnerabilities found.
+  - command: corepack pnpm sbom
+    result: passed
+    summary: CycloneDX 1.6 SBOM generated with 884 exact components and normalized reproducibly.

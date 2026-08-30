@@ -1,0 +1,25 @@
+{
+  "name": "visualization-agent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/I7AKEM/visualization-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/I7AKEM/visualization-agent/issues"
+  },
+  "homepage": "https://github.com/I7AKEM/visualization-agent#readme",
+  "dependencies": {
+    "@antv/ava": "^3.4.1",
+    "@antv/gpt-vis-ssr": "^0.3.8",
+    "@antv/mcp-server-chart": "^0.9.10"
+  }
+}

@@ -1,0 +1,6 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm-lock.yaml is the only production Node dependency lock. The root
+# package-lock.json is an immutable legacy POC artifact and must not be used.
