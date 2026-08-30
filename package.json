@@ -1,25 +1,48 @@
 {
-  "name": "visualization-agent",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "visualization-agent-production",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Production workspace for the Visualization Agent platform.",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "24.20.0",
+    "pnpm": "10.34.5"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "audit:prod": "pnpm audit --prod --audit-level high",
+    "build": "pnpm -r --if-present build",
+    "check:peers": "node scripts/check-peer-compatibility.mjs",
+    "check:runtime": "node scripts/check-runtime-pins.mjs",
+    "lint": "pnpm -r --if-present lint",
+    "presbom": "node scripts/prepare-sbom.mjs",
+    "sbom": "node scripts/generate-node-sbom.mjs",
+    "test": "pnpm run test:foundation && pnpm -r --if-present test:unit",
+    "test:compat": "pnpm run test:foundation && pnpm --filter @visualization-agent/web test:compat",
+    "test:foundation": "node --test tests/compatibility/node/*.test.mjs",
+    "test:unit": "pnpm -r --if-present test:unit",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "verify": "pnpm run check:runtime && pnpm run check:peers && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/I7AKEM/visualization-agent.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/I7AKEM/visualization-agent/issues"
-  },
-  "homepage": "https://github.com/I7AKEM/visualization-agent#readme",
-  "dependencies": {
-    "@antv/ava": "^3.4.1",
-    "@antv/gpt-vis-ssr": "^0.3.8",
-    "@antv/mcp-server-chart": "^0.9.10"
+  "devDependencies": {
+    "@cyclonedx/cdxgen": "12.8.4",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.3",
+    "fast-check": "4.9.0",
+    "jsdom": "30.0.1",
+    "semver": "7.7.4",
+    "typescript": "6.0.3",
+    "vitest": "4.1.8",
+    "zod": "4.1.8"
   }
 }

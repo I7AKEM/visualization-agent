@@ -1,0 +1,21 @@
+{
+  "name": "@visualization-agent/contracts-ts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Empty generated TypeScript contract target; generation begins in WP-02.",
+  "type": "module",
+  "engines": {
+    "node": "24.20.0",
+    "pnpm": "10.34.5"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

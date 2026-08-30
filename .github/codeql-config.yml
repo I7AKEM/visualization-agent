@@ -1,0 +1,12 @@
+name: visualization-agent-production-foundation
+paths:
+  - apps
+  - packages
+  - services
+  - scripts
+paths-ignore:
+  - agent
+  - demos
+  - ui
+  - out
+  - docs/evidence/wp-01/fixtures/legacy-poc

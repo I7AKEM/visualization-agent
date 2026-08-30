@@ -1,0 +1,164 @@
+schema_version: 1
+work_package: WP-01
+lock_date: 2026-08-29
+selection_policy: latest non-prerelease patch in each production-spec train on lock date
+production_package_manager:
+  name: pnpm
+  version: 10.34.5
+  license: MIT
+  package_manager_field: pnpm@10.34.5
+  integrity: sha512-pO4F8vc2WCVb1qiYWcBlpFwopX2u+uLIk6Fo7itzFow3uR6D5X6mdlStA/AwMXRkMOi84442LgQmBfuKvIAZLg==
+  integrity_note: Package integrity is evidence metadata; pnpm 10.34.5 package-manager-strict-version rejects a Corepack hash suffix in packageManager.
+  source: https://registry.npmjs.org/pnpm/10.34.5
+  production_lock: pnpm-lock.yaml
+  production_lock_sha256: 5a0eaf02eeca595ac9dfec2c9fad250463e123a1aef4c09244a0027dd4609252
+  repository_local_store: .pnpm-store
+runtime:
+  name: node
+  version: 24.20.0
+  release_line: Krypton LTS
+  source: https://nodejs.org/dist/v24.20.0/
+  checksums_source: https://nodejs.org/dist/v24.20.0/SHASUMS256.txt
+  distribution_sha256:
+    darwin_arm64_tar_gz: 40e5607e5ecb3db9192723776da2d75d966260fc74a7a9e731c1bd67dda96bc8
+    darwin_arm64_tar_xz: b7bf7707070b950ba1ec5f1af3bb6de0f2b1962c5033973d94068ab021ef3014
+    linux_x64_tar_xz: 2f2c0da162318f0de47665410c7c8c2ed3d36c8f3105de4bbc61176c70a7cbf2
+    linux_arm64_tar_xz: 5f4ddab610c1ab2016b3c227cebdbf6d9495161487e4739c7b90090595f465f7
+production_dependencies:
+  - package: next
+    version: 16.3.3
+    train: "16.3"
+    license: MIT
+    integrity: sha512-tuRTx1nQ/yVw83cwJBo9F+njGUgMn3UHQycreWHB8XsStvvAh1AthbI8/4IpKnFaF58F+iSiHejYOlMQ/eq83g==
+    source: https://registry.npmjs.org/next/16.3.3
+    engines:
+      node: ">=20.9.0"
+    relevant_peers:
+      react: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+      react-dom: ^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0
+  - package: react
+    version: 19.2.8
+    train: "19.2"
+    license: MIT
+    integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==
+    source: https://registry.npmjs.org/react/19.2.8
+  - package: react-dom
+    version: 19.2.8
+    train: "19.2"
+    license: MIT
+    integrity: sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==
+    source: https://registry.npmjs.org/react-dom/19.2.8
+    relevant_peers:
+      react: ^19.2.8
+  - package: ai
+    version: 7.0.83
+    train: "7"
+    license: Apache-2.0
+    integrity: sha512-bg7+SopUwqA7DeQ2O8I9qELyQTHCeeI/0RuNUlT/gGz+LqWrIl5vbYRQv3eMBEnUsVFaM33n6SA8Vqe9gi8L1w==
+    source: https://registry.npmjs.org/ai/7.0.83
+    engines:
+      node: ">=22"
+    relevant_peers:
+      zod: ^3.25.76 || ^4.1.8
+  - package: "@ai-sdk/react"
+    version: 4.0.86
+    train: "AI SDK 7 companion"
+    license: Apache-2.0
+    integrity: sha512-dXFbiT9TOfhbtdBS7BK051ZweMnkpY4fGBmf4PCGRI3LdPDmQ2TBU5hIAT4ESpzjMpE7PmJBu/Zx+gL1mVSWyA==
+    source: https://registry.npmjs.org/%40ai-sdk%2freact/4.0.86
+    engines:
+      node: ">=22"
+    required_dependency:
+      ai: 7.0.83
+    relevant_peers:
+      react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
+  - package: "@ant-design/x"
+    version: 2.8.0
+    train: "2.8"
+    license: MIT
+    integrity: sha512-z0ncy8i3sy8fnFS1iETTQfP2Os1kzOl5OPdljT5ZFSCDsZp+VYFt9jHHMacBnkEftKNzkmG1BLSwvBTS1aWxiw==
+    source: https://registry.npmjs.org/%40ant-design%2fx/2.8.0
+    relevant_peers:
+      antd: ^6.1.1
+      react: ">=18.0.0"
+      react-dom: ">=18.0.0"
+  - package: antd
+    version: 6.4.5
+    train: "6.4"
+    license: MIT
+    integrity: sha512-xyAgX/sqF/CRS1G95oM4ql0+3TBG+tE58aRJqdUPVv4yMZcQrnnkA4cU7Uc5Rny2yK2TrusDVargHzzXUrlJ1g==
+    source: https://registry.npmjs.org/antd/6.4.5
+    relevant_peers:
+      react: ">=18.0.0"
+      react-dom: ">=18.0.0"
+  - package: zod
+    version: 4.1.8
+    selection_reason: exact floor of the AI SDK 7 supported Zod 4 peer range
+    license: MIT
+    integrity: sha512-5R1P+WwQqmmMIEACyzSvo4JXHY5WiAFHRMg+zBZKgKS+Q1viRa0C1hmUKtHltoIFKtIdki3pRxkmpP74jnNYHQ==
+    source: https://registry.npmjs.org/zod/4.1.8
+tooling:
+  "@cyclonedx/cdxgen":
+    version: 12.8.4
+    license: Apache-2.0
+    integrity: sha512-9EMER2beUSU7fvKgVaYOnYCFqAHrY3bQ7ERenh29/Edku0ctEXzYdov6vCmjmo/hSBH+JtvA7+j1U884MVYFOA==
+    source: https://registry.npmjs.org/%40cyclonedx%2fcdxgen/12.8.4
+  "@testing-library/dom":
+    version: 10.4.1
+    license: MIT
+    source: https://registry.npmjs.org/%40testing-library%2fdom/10.4.1
+  "@testing-library/jest-dom":
+    version: 7.0.1
+    license: MIT
+    source: https://registry.npmjs.org/%40testing-library%2fjest-dom/7.0.1
+  "@testing-library/react":
+    version: 16.3.3
+    license: MIT
+    source: https://registry.npmjs.org/%40testing-library%2freact/16.3.3
+  "@types/node":
+    version: 24.13.3
+    license: MIT
+    source: https://registry.npmjs.org/%40types%2fnode/24.13.3
+  "@types/react":
+    version: 19.2.18
+    license: MIT
+    source: https://registry.npmjs.org/%40types%2freact/19.2.18
+  "@types/react-dom":
+    version: 19.2.5
+    license: MIT
+    source: https://registry.npmjs.org/%40types%2freact-dom/19.2.5
+  eslint:
+    version: 9.39.5
+    license: MIT
+    source: https://registry.npmjs.org/eslint/9.39.5
+    selection_reason: latest ESLint 9 maintenance patch accepted by eslint-config-next 16.3.3 peers; ESLint 10.5.0 was rejected by the strict peer gate
+  eslint-config-next:
+    version: 16.3.3
+    license: MIT
+    source: https://registry.npmjs.org/eslint-config-next/16.3.3
+  fast-check:
+    version: 4.9.0
+    license: MIT
+    source: https://registry.npmjs.org/fast-check/4.9.0
+  jsdom:
+    version: 30.0.1
+    license: MIT
+    source: https://registry.npmjs.org/jsdom/30.0.1
+  semver:
+    version: 7.7.4
+    license: ISC
+    source: https://registry.npmjs.org/semver/7.7.4
+  typescript:
+    version: 6.0.3
+    license: Apache-2.0
+    source: https://registry.npmjs.org/typescript/6.0.3
+  vitest:
+    version: 4.1.8
+    license: MIT
+    source: https://registry.npmjs.org/vitest/4.1.8
+legacy_poc_exception:
+  root_lock: package-lock.json
+  lock_sha256: 5222d716a8480a61d417ec2efef1d5da44741f1c3d2a12ea87a778e3339650ff
+  manifest_fixture: docs/evidence/wp-01/fixtures/legacy-poc/package.json
+  manifest_sha256: a2eabe04488069f70642240e8ec35f15652797875c3fd6d158fb74effabee404
+  policy: frozen POC-only; npm install at repository root is prohibited

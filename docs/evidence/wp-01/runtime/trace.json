@@ -1,0 +1,40 @@
+{
+  "asset": {
+    "body_file": "client-asset.js",
+    "bytes": 16891,
+    "headers_file": "asset-headers.txt",
+    "request": "GET /_next/static/chunks/0dx55gb0etii_.js HTTP/1.1",
+    "sha256": "6b1d5556b9a152c3cda207b3c932c8b4018b0a83da91e911d32aba98a60c9502",
+    "status": "HTTP/1.1 200 OK"
+  },
+  "command": [
+    "corepack",
+    "pnpm",
+    "--filter",
+    "@visualization-agent/web",
+    "start"
+  ],
+  "host": "127.0.0.1",
+  "page": {
+    "body_assertion": "<h1>Visualization Agent</h1>",
+    "body_assertion_passed": true,
+    "body_file": "page-body.html",
+    "bytes": 4673,
+    "headers_file": "page-headers.txt",
+    "request": "GET / HTTP/1.1",
+    "sha256": "25024df12beb9ec369aa315314bb70343db71ef56f9974dc307e5b83fd55c691",
+    "status": "HTTP/1.1 200 OK"
+  },
+  "port": 34101,
+  "result": "passed",
+  "schema_version": 1,
+  "shutdown": {
+    "error": null,
+    "forced_kill": false,
+    "listener_remaining": false,
+    "log_file": "startup-shutdown.log",
+    "process_exit_code": 130,
+    "signal": "SIGINT"
+  },
+  "startup_error": null
+}
