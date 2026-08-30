@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://visualization-agent.invalid/schemas/handoff-v1.schema.json",
+  "title": "Visualization Agent work-package handoff v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "work_package",
+    "base_integration_commit",
+    "delivery_commit",
+    "handoff_commit",
+    "handoff_state",
+    "changed_paths",
+    "requirements",
+    "dependency_commits",
+    "commands_run",
+    "tests_not_run",
+    "eval_manifest_versions",
+    "migrations",
+    "configuration_keys",
+    "secret_names",
+    "telemetry_changes",
+    "disabled_features",
+    "known_risks",
+    "rollback_steps",
+    "critical_gates_passed",
+    "reviewers_required"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "work_package": {"type": "string", "pattern": "^WP-(0[0-9]|1[0-4])$"},
+    "base_integration_commit": {"$ref": "#/$defs/gitCommit"},
+    "delivery_commit": {"$ref": "#/$defs/gitCommit"},
+    "handoff_commit": {
+      "oneOf": [
+        {"$ref": "#/$defs/gitCommit"},
+        {"type": "null"}
+      ]
+    },
+    "handoff_state": {
+      "enum": ["submitted", "accepted", "conditionally_accepted", "rejected"]
+    },
+    "changed_paths": {"$ref": "#/$defs/nonEmptyUniqueStrings"},
+    "requirements": {"$ref": "#/$defs/uniqueStrings"},
+    "dependency_commits": {
+      "type": "object",
+      "propertyNames": {"pattern": "^WP-(0[0-9]|1[0-4])$"},
+      "additionalProperties": {"$ref": "#/$defs/gitCommit"}
+    },
+    "commands_run": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exit_code", "result"],
+        "properties": {
+          "command": {"type": "string", "minLength": 1},
+          "exit_code": {"type": "integer", "minimum": 0, "maximum": 255},
+          "result": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "tests_not_run": {"$ref": "#/$defs/uniqueStrings"},
+    "eval_manifest_versions": {"$ref": "#/$defs/uniqueStrings"},
+    "migrations": {"$ref": "#/$defs/uniqueStrings"},
+    "configuration_keys": {"$ref": "#/$defs/uniqueStrings"},
+    "secret_names": {"$ref": "#/$defs/uniqueStrings"},
+    "telemetry_changes": {"$ref": "#/$defs/uniqueStrings"},
+    "disabled_features": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^DF-[0-9]{3}$"}
+    },
+    "known_risks": {"$ref": "#/$defs/uniqueStrings"},
+    "rollback_steps": {"$ref": "#/$defs/uniqueStrings"},
+    "critical_gates_passed": {"$ref": "#/$defs/uniqueStrings"},
+    "reviewers_required": {"$ref": "#/$defs/uniqueStrings"},
+    "local_runtime_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "rationale",
+        "subgates",
+        "frozen_lock_start_commands",
+        "health_readiness_checks",
+        "graceful_shutdown_checks",
+        "agent_api_stream_traces",
+        "ui_e2e_artifacts",
+        "dataset_result_artifact_hashes",
+        "failures_and_retests"
+      ],
+      "properties": {
+        "status": {"$ref": "#/$defs/runtimeStatus"},
+        "rationale": {"type": "string", "minLength": 1},
+        "subgates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "frozen_lock_start_health_shutdown",
+            "offline_agent_api_and_stream",
+            "wp_05_plus_real_ui",
+            "later_package_suite_extension"
+          ],
+          "properties": {
+            "frozen_lock_start_health_shutdown": {"$ref": "#/$defs/runtimeStatus"},
+            "offline_agent_api_and_stream": {"$ref": "#/$defs/runtimeStatus"},
+            "wp_05_plus_real_ui": {"$ref": "#/$defs/runtimeStatus"},
+            "later_package_suite_extension": {"$ref": "#/$defs/runtimeStatus"}
+          }
+        },
+        "frozen_lock_start_commands": {"$ref": "#/$defs/uniqueStrings"},
+        "health_readiness_checks": {"$ref": "#/$defs/uniqueStrings"},
+        "graceful_shutdown_checks": {"$ref": "#/$defs/uniqueStrings"},
+        "agent_api_stream_traces": {"$ref": "#/$defs/uniqueStrings"},
+        "ui_e2e_artifacts": {"$ref": "#/$defs/uniqueStrings"},
+        "dataset_result_artifact_hashes": {"$ref": "#/$defs/runtimeEvidenceReferences"},
+        "failures_and_retests": {"$ref": "#/$defs/uniqueStrings"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"handoff_state": {"const": "submitted"}}},
+      "then": {"properties": {"handoff_commit": {"type": "null"}}},
+      "else": {"properties": {"handoff_commit": {"$ref": "#/$defs/gitCommit"}}}
+    },
+    {
+      "if": {
+        "properties": {"work_package": {"pattern": "^WP-(0[1-9]|1[0-4])$"}},
+        "required": ["work_package"]
+      },
+      "then": {"required": ["local_runtime_evidence"]}
+    },
+    {
+      "if": {
+        "properties": {
+          "work_package": {"pattern": "^WP-(0[1-9]|1[0-4])$"},
+          "handoff_state": {"enum": ["submitted", "accepted", "conditionally_accepted"]}
+        },
+        "required": ["work_package", "handoff_state"]
+      },
+      "then": {
+        "properties": {
+          "local_runtime_evidence": {
+            "properties": {
+              "status": {"enum": ["passed", "not_applicable"]},
+              "subgates": {
+                "properties": {
+                  "frozen_lock_start_health_shutdown": {
+                    "enum": ["passed", "not_applicable"]
+                  },
+                  "offline_agent_api_and_stream": {
+                    "enum": ["passed", "not_applicable"]
+                  },
+                  "wp_05_plus_real_ui": {"enum": ["passed", "not_applicable"]},
+                  "later_package_suite_extension": {
+                    "enum": ["passed", "not_applicable"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "work_package": {"const": "WP-01"},
+          "handoff_state": {"enum": ["submitted", "accepted", "conditionally_accepted"]}
+        },
+        "required": ["work_package", "handoff_state"]
+      },
+      "then": {
+        "properties": {
+          "local_runtime_evidence": {
+            "properties": {
+              "status": {"const": "passed"},
+              "subgates": {
+                "properties": {"frozen_lock_start_health_shutdown": {"const": "passed"}}
+              },
+              "frozen_lock_start_commands": {"minItems": 1},
+              "health_readiness_checks": {"minItems": 1},
+              "graceful_shutdown_checks": {"minItems": 1},
+              "failures_and_retests": {"minItems": 1}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "runtimeStatus": {"enum": ["passed", "failed", "not_applicable"]},
+    "uniqueStrings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "nonEmptyUniqueStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?!/)(?!.*(?:^|/)[.][.](?:/|$))(?!.*\\\\).+$"
+      }
+    },
+    "runtimeEvidenceReferences": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(?:docs/evidence/wp-[0-9]{2}/[^#]+|github-actions://[^#]+)#sha256:[0-9a-f]{64}$"
+      }
+    }
+  }
+}

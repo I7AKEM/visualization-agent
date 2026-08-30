@@ -1,0 +1,28 @@
+data: {"type":"start","messageId":"message-wp01-reference"}
+
+data: {"type":"start-step"}
+
+data: {"type":"data-run-status","id":"run-status-1","data":{"stage":"approval_required","progress":0.5}}
+
+data: {"type":"text-start","id":"text-1"}
+
+data: {"type":"text-delta","id":"text-1","delta":"Approval required."}
+
+data: {"type":"text-end","id":"text-1"}
+
+data: {"type":"tool-input-start","toolCallId":"tool-call-1","toolName":"fixtureConsequentialAction"}
+
+data: {"type":"tool-input-delta","toolCallId":"tool-call-1","inputTextDelta":"{\"dataset_version_id\":\"fixture\"}"}
+
+data: {"type":"tool-input-available","toolCallId":"tool-call-1","toolName":"fixtureConsequentialAction","input":{"dataset_version_id":"fixture"}}
+
+data: {"type":"tool-approval-request","toolCallId":"tool-call-1","approvalId":"approval-1","reason":"Reference fixture only"}
+
+data: {"type":"tool-output-denied","toolCallId":"tool-call-1"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

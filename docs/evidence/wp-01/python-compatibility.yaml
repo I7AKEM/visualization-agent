@@ -1,0 +1,59 @@
+schema_version: 1
+record_type: wp_01_python_pydantic_compatibility
+work_package: WP-01
+recorded_at: 2026-08-29
+status: passed
+production_approved: false
+runtime:
+  python: 3.12.14
+  pydantic_ai_slim: 2.36.0
+  pydantic_evals: 2.36.0
+  pydantic: 2.13.5
+  pydantic_core: 2.46.5
+  pydantic_settings: 2.15.0
+  logfire: 4.41.0
+  fastapi: 0.141.1
+adapter_contract:
+  backend: pydantic_ai.ui.vercel_ai.VercelAIAdapter
+  backend_sdk_version: 7
+  frontend: ai 7.0.83
+  adapter_written: false
+  fallback_activated: false
+  fixtures:
+    - tests/compatibility/fixtures/pydantic-ai-2.36.0-text-custom.sse
+    - tests/compatibility/fixtures/pydantic-ai-2.36.0-hitl.sse
+  normalization: >-
+    Exact Pydantic-generated dynamic text IDs and timestamps are normalized to fixed values;
+    event kinds, ordering, payloads, tool IDs, headers, and terminal framing remain unchanged.
+  proven_parts:
+    - start
+    - start-step
+    - text-start
+    - text-delta
+    - text-end
+    - data-run-status typed custom chunk
+    - tool-input-start
+    - tool-input-delta
+    - tool-input-available
+    - tool-approval-request
+    - finish-step
+    - finish
+    - '[DONE]'
+  response_headers:
+    x-vercel-ai-ui-message-stream: v1
+offline_safety:
+  model: pydantic_ai.models.test.TestModel
+  allow_model_requests: false
+  provider_credentials_present: false
+  protected_tool_executed_before_approval: false
+results:
+  - command: .venv/bin/pytest -q tests/compatibility/python/test_vercel_ai_adapter.py tests/unit/test_python_foundation.py
+    exit_code: 0
+    result: 5 passed
+  - command: pnpm --filter @visualization-agent/web test:compat
+    exit_code: 0
+    result: 2 files passed; 4 tests passed; exact Python-generated custom-data and HITL fixtures consumed by AI SDK 7
+decision: >-
+  The exact Pydantic AI 2.36.0 to AI SDK 7 contract passed. Retain AI SDK 7 and do not
+  introduce an ad hoc adapter or the documented compatibility fallback.
+owner_dependent_features_enabled: false

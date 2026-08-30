@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-08-29",
+  "policy": {
+    "github_actions": "Every external action reference must use the reviewed 40-hex commit below.",
+    "dependency_tools": "Language security and SBOM tools are installed only from the committed pnpm and uv locks.",
+    "update_rule": "A version update requires upstream tag-to-commit verification, lock regeneration, security review, and all CI gates."
+  },
+  "github_actions": {
+    "actions/checkout": {
+      "version": "6.0.2",
+      "sha": "de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+      "source": "https://github.com/actions/checkout/releases/tag/v6.0.2"
+    },
+    "actions/dependency-review-action": {
+      "version": "4.8.3",
+      "sha": "05fe4576374b728f0c523d6a13d64c25081e0803",
+      "source": "https://github.com/actions/dependency-review-action/releases/tag/v4.8.3"
+    },
+    "actions/setup-node": {
+      "version": "6.2.0",
+      "sha": "6044e13b5dc448c55e2357c09f80417699197238",
+      "source": "https://github.com/actions/setup-node/releases/tag/v6.2.0"
+    },
+    "actions/setup-python": {
+      "version": "6.2.0",
+      "sha": "a309ff8b426b58ec0e2a45f0f869d46889d02405",
+      "source": "https://github.com/actions/setup-python/releases/tag/v6.2.0"
+    },
+    "actions/upload-artifact": {
+      "version": "7.0.1",
+      "sha": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "source": "https://github.com/actions/upload-artifact/releases/tag/v7.0.1"
+    },
+    "astral-sh/setup-uv": {
+      "version": "9.0.0",
+      "sha": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+      "source": "https://github.com/astral-sh/setup-uv/releases/tag/v9.0.0"
+    },
+    "github/codeql-action": {
+      "version": "4.37.3",
+      "sha": "e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81",
+      "source": "https://github.com/github/codeql-action/releases/tag/v4.37.3"
+    }
+  },
+  "binary_tools": {
+    "trivy": {
+      "version": "0.73.0",
+      "url": "https://github.com/aquasecurity/trivy/releases/download/v0.73.0/trivy_0.73.0_Linux-64bit.tar.gz",
+      "sha256": "2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b",
+      "archive_member": "trivy",
+      "release_immutable": true,
+      "release_api_asset_digest_verified_at_review": "sha256:2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b",
+      "source": "https://github.com/aquasecurity/trivy/releases/tag/v0.73.0"
+    }
+  },
+  "excluded_scanners": {
+    "aquasecurity/trivy-action": {
+      "status": "blocked",
+      "reason": "The wrapper action is not admitted after the 2026 compromise; CI instead verifies the immutable v0.73.0 Linux binary asset against its committed GitHub release digest."
+    }
+  }
+}

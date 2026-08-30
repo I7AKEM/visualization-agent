@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://visualization-agent.invalid/schemas/integration-acceptance-v1.schema.json",
+  "title": "Visualization Agent integration acceptance v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_type",
+    "work_package",
+    "status",
+    "acceptance_base_commit",
+    "delivery_commit",
+    "handoff_commit",
+    "specification_commit",
+    "acceptance_scope",
+    "validation",
+    "unresolved_owner_inputs",
+    "disabled_features",
+    "conditions",
+    "rollback_steps",
+    "dependent_task_base_rule"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "record_type": {"const": "integration_acceptance"},
+    "work_package": {"type": "string", "pattern": "^WP-(0[0-9]|1[0-4])$"},
+    "status": {"enum": ["accepted", "conditionally_accepted", "rejected"]},
+    "decision_date": {"type": "string", "format": "date"},
+    "acceptance_base_commit": {"$ref": "#/$defs/gitCommit"},
+    "delivery_commit": {"$ref": "#/$defs/gitCommit"},
+    "handoff_commit": {"$ref": "#/$defs/gitCommit"},
+    "specification_commit": {"$ref": "#/$defs/gitCommit"},
+    "production_approved": {"type": "boolean"},
+    "acceptance_scope": {"type": "object", "minProperties": 1},
+    "validation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "result"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "evaluated_commit": {"type": "string", "minLength": 1},
+          "command": {"type": "string", "minLength": 1},
+          "exit_code": {"type": "integer", "minimum": 0, "maximum": 255},
+          "result": {"type": "string", "minLength": 1},
+          "result_artifact": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": true
+      }
+    },
+    "unresolved_owner_inputs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^OI-[0-9]{3}$"}
+    },
+    "scoped_owner_input_resolutions": {"type": "array", "items": {"type": "object"}},
+    "disabled_features": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^DF-[0-9]{3}$"}
+    },
+    "conditions": {"$ref": "#/$defs/uniqueStrings"},
+    "poc_preservation": {"type": "object"},
+    "tests_not_run": {"$ref": "#/$defs/uniqueStrings"},
+    "reviewers_required": {"$ref": "#/$defs/uniqueStrings"},
+    "rollback_steps": {"$ref": "#/$defs/uniqueStrings"},
+    "local_runtime_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "rationale",
+        "components",
+        "subgates",
+        "evidence",
+        "integration_commands"
+      ],
+      "properties": {
+        "status": {"$ref": "#/$defs/runtimeStatus"},
+        "rationale": {"type": "string", "minLength": 20},
+        "components": {"$ref": "#/$defs/nonEmptyUniqueStrings"},
+        "subgates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "frozen_lock_start_health_shutdown",
+            "offline_agent_api_and_stream",
+            "wp_05_plus_real_ui",
+            "later_package_suite_extension"
+          ],
+          "properties": {
+            "frozen_lock_start_health_shutdown": {"$ref": "#/$defs/runtimeSubgate"},
+            "offline_agent_api_and_stream": {"$ref": "#/$defs/runtimeSubgate"},
+            "wp_05_plus_real_ui": {"$ref": "#/$defs/runtimeSubgate"},
+            "later_package_suite_extension": {"$ref": "#/$defs/runtimeSubgate"}
+          }
+        },
+        "evidence": {"$ref": "#/$defs/runtimeEvidenceReferences"},
+        "integration_commands": {"$ref": "#/$defs/nonEmptyUniqueStrings"}
+      }
+    },
+    "dependent_task_base_rule": {"const": "acceptance_record_introduction_commit"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"work_package": {"pattern": "^WP-(0[1-9]|1[0-4])$"}},
+        "required": ["work_package"]
+      },
+      "then": {"required": ["local_runtime_gate"]}
+    },
+    {
+      "if": {
+        "properties": {
+          "work_package": {"pattern": "^WP-(0[1-9]|1[0-4])$"},
+          "status": {"enum": ["accepted", "conditionally_accepted"]}
+        },
+        "required": ["work_package", "status"]
+      },
+      "then": {
+        "properties": {
+          "validation": {
+            "contains": {
+              "type": "object",
+              "required": ["id", "exit_code", "result"],
+              "properties": {
+                "id": {"const": "LOCAL-RUNTIME"},
+                "exit_code": {"const": 0},
+                "result": {"type": "string", "pattern": "^[Pp][Aa][Ss][Ss]"}
+              }
+            }
+          },
+          "local_runtime_gate": {
+            "properties": {
+              "status": {"enum": ["passed", "not_applicable"]},
+              "subgates": {
+                "properties": {
+                  "frozen_lock_start_health_shutdown": {
+                    "properties": {"status": {"enum": ["passed", "not_applicable"]}}
+                  },
+                  "offline_agent_api_and_stream": {
+                    "properties": {"status": {"enum": ["passed", "not_applicable"]}}
+                  },
+                  "wp_05_plus_real_ui": {
+                    "properties": {"status": {"enum": ["passed", "not_applicable"]}}
+                  },
+                  "later_package_suite_extension": {
+                    "properties": {"status": {"enum": ["passed", "not_applicable"]}}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "work_package": {"const": "WP-01"},
+          "status": {"enum": ["accepted", "conditionally_accepted"]}
+        },
+        "required": ["work_package", "status"]
+      },
+      "then": {
+        "properties": {
+          "local_runtime_gate": {
+            "properties": {
+              "status": {"const": "passed"},
+              "subgates": {
+                "properties": {
+                  "frozen_lock_start_health_shutdown": {
+                    "properties": {"status": {"const": "passed"}}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitCommit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "runtimeStatus": {"enum": ["passed", "failed", "not_applicable"]},
+    "runtimeSubgate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "rationale"],
+      "properties": {
+        "status": {"$ref": "#/$defs/runtimeStatus"},
+        "rationale": {"type": "string", "minLength": 20}
+      }
+    },
+    "uniqueStrings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "nonEmptyUniqueStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "runtimeEvidenceReferences": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(?:docs/evidence/wp-[0-9]{2}/[^#]+|github-actions://[^#]+)#sha256:[0-9a-f]{64}$"
+      }
+    }
+  }
+}

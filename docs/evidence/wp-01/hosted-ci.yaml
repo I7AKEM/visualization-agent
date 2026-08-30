@@ -1,0 +1,45 @@
+schema_version: 1
+record_type: wp_01_hosted_ci_requirement
+work_package: WP-01
+status: pending_external_authorization
+acceptance_blocked: true
+production_approved: false
+exact_ref_rule: >-
+  All required hosted workflows must conclude success for the exact corrected handoff commit.
+  Every job explicitly checks out WP01_TESTED_SHA. For pull_request this is the PR head SHA,
+  not GitHub's synthetic merge SHA; the manifest records both event_sha and checkout_sha and
+  fails unless git rev-parse HEAD equals tested_sha. The integration owner records the exact
+  corrected handoff commit after the handoff-only commit exists.
+required_workflows:
+  - gate: quality
+    manifest_artifact: wp-01-quality-run-<run-id>-<attempt>-<sha>
+    required_fields: [run_id, run_attempt, run_url, exact_sha, checkout_sha, event_sha, artifact_references]
+  - gate: security
+    manifest_artifact: wp-01-security-run-<run-id>-<attempt>-<sha>
+    required_fields: [run_id, run_attempt, run_url, exact_sha, checkout_sha, event_sha, artifact_references]
+  - gate: dependency-review
+    manifest_artifact: wp-01-dependency-review-run-<run-id>-<attempt>-<sha>
+    trigger: pull_request_with_corrected_handoff_as_pr_head
+    required_fields: [run_id, run_attempt, run_url, exact_sha, checkout_sha, event_sha, pull_request_head_sha, pull_request_base_sha, artifact_references]
+  - gate: reproducibility
+    manifest_artifact: wp-01-sbom-reproducibility-<run-id>-<attempt>-<sha>
+    required_fields: [run_id, run_attempt, run_url, exact_sha, checkout_sha, event_sha, artifact_references]
+required_artifacts:
+  - quality hosted run context
+  - security hosted run context, Trivy JSON, and CodeQL category reference
+  - dependency-review hosted run context
+  - reproducibility hosted run context, SBOM checksums, two-build provenance, generated manifests, and normalized archives
+local_state:
+  push_performed: false
+  workflow_dispatch_performed: false
+  reason: External push and workflow dispatch are excluded without separate user authorization.
+repository_local_package_manager:
+  version_source: package.json packageManager pnpm@10.34.5
+  invocation: corepack pnpm
+  ci_cache: ${{ github.workspace }}/.corepack
+  global_shim_mutation: false
+  corepack_enable_used: false
+acceptance_rule: >-
+  A local pass or a generated run-context manifest is not a green hosted result. Integration
+  must verify all four GitHub run conclusions, URLs/IDs, exact SHA equality, and uploaded
+  artifact/checksum references before accepting WP-01 as dependency evidence.
