@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+Cache-Control: public, max-age=31536000, immutable
+Accept-Ranges: bytes
+Last-Modified: Sun, 30 Aug 2026 13:01:49 GMT
+ETag: W/"41fb-1a052c30a4f"
+Content-Type: application/javascript; charset=UTF-8
+Content-Length: 16891
+Vary: Accept-Encoding
+Date: Sun, 30 Aug 2026 13:02:38 GMT
+Connection: close

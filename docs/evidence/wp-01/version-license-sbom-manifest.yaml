@@ -1,0 +1,148 @@
+schema_version: 1
+record_type: wp_01_version_license_sbom_manifest
+work_package: WP-01
+assignment_base_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+recorded_at: 2026-08-30
+production_approved: false
+lockfiles:
+  node:
+    path: pnpm-lock.yaml
+    package_manager: pnpm 10.34.5 through Corepack
+    sha256: 8d6fc525202ee500fea05e9341e5e5a8c377ba5a59509c118f59ae1705ff4390
+    frozen_install: passed
+    repository_local_store: .pnpm-store
+  python:
+    path: uv.lock
+    package_manager: uv 0.12.7
+    python: 3.12.14
+    sha256: ea32a222c1d760034ca7f390f0b607e5919598375caf11e0a6b244b1eaa8954c
+    frozen_install: passed
+exact_version_and_license_records:
+  node: docs/evidence/wp-01/node-dependencies.yaml
+  python: docs/evidence/wp-01/python-dependencies.yaml
+  direct_and_tool_dependency_count: 48
+  validation: passed
+  policy: >-
+    Exact direct and tool licenses are fail-closed here and in dependency review. The SBOM
+    generator's absent transitive/platform license fields are reported, not silently rewritten;
+    GitHub dependency review remains the full-lock transitive license gate.
+  reviewed_transitive_exception:
+    package: khroma
+    version: 2.1.0
+    package_metadata_license: absent
+    reviewed_license_file: MIT
+    reviewed_license_file_sha256: 66b333b0f66759a0b710459e03f7029abe17f4358114a128d2c972e642961b49
+    policy: keep dependency-review license evaluation enabled; do not suppress an upstream warning
+sboms:
+  normalization:
+    script: scripts/ci/normalize_sbom.py
+    source_date_epoch: 315532800
+    repeated_generation_byte_identical_on_recorded_host: true
+    different_checkout_paths_byte_identical: true
+    checkout_path_policy: >-
+      Raw checkout prefixes in Node properties and Python externalReferences are replaced with
+      /workspace or file:///workspace before hashing; no component or dependency is removed.
+  node:
+    format: CycloneDX JSON 1.6
+    generator: '@cyclonedx/cdxgen 12.8.4'
+    command: corepack pnpm sbom
+    output: artifacts/sbom/node.cdx.json
+    output_policy: ephemeral CI artifact; not source controlled
+    component_count: 883
+    components_with_generator_license_metadata: 697
+    normalized_sha256_on_darwin_arm64: b8ee306780f72efe9390483035eaec7c663879d36a05c691dfbe0d452b0cb80b
+    undici_versions: [7.29.0, 8.10.0]
+    vulnerable_undici_7_28_0_present: false
+  python:
+    format: CycloneDX JSON 1.6
+    generator: cyclonedx-bom 7.3.1
+    command: cyclonedx-py environment --output-format JSON --output-file artifacts/sbom/python.cdx.json
+    output: artifacts/sbom/python.cdx.json
+    output_policy: ephemeral CI artifact; not source controlled
+    component_count_on_darwin_arm64: 161
+    components_with_generator_license_metadata: 154
+    normalized_sha256_on_darwin_arm64: 0ff038cba0f5d005b1a481c39faf61bb6f6d33bdb79bddf8da9853b79513ebed
+  platform_note: >-
+    Python environment SBOM membership follows locked environment markers, so Linux CI may have
+    a different exact component count/hash from Darwin while remaining derived from the same uv.lock.
+  license_metadata_boundary:
+    darwin_arm64_recorded_host:
+      node_components_without_generator_license_metadata: 186
+      python_components_without_generator_license_metadata: 7
+      unique_omitted_component_count: 182
+    failed_old_handoff_linux_run:
+      node_components: 884
+      node_components_with_generator_license_metadata: 697
+      python_components: 163
+      python_components_with_generator_license_metadata: 156
+      unique_omitted_component_count: 183
+      scope: immutable failed run 33295329884; not green evidence
+    failed_pr_2_linux_run:
+      node_components: 884
+      node_components_with_generator_license_metadata: 697
+      scope: >-
+        Immutable reproducibility run 33297848829 succeeded for vulnerable head
+        3db99620f038761cd9f32ba9f206963d87fcc277. Its SBOM result is historical only and cannot
+        transfer to this corrected lock.
+    policy: >-
+      Omission counts are platform-specific because the locked Python environment follows marker
+      selection. Local policy validates all 47 declarations/48 reviewed exact records, but the
+      mandatory full-lock license decision remains blocked until hosted Dependency Review
+      succeeds for the exact corrected handoff commit.
+dependency_advisory_remediation:
+  advisory: https://github.com/advisories/GHSA-4cwx-7wf7-3272
+  cve: CVE-2026-13697
+  failed_pr_2_dependency_review_run: 33297848886
+  failed_resolution: undici@7.28.0
+  correction: >-
+    Exact parent-scoped overrides move only @cyclonedx/cdxgen 12.8.4 and cheerio 1.2.0 to
+    undici 7.29.0. The lock validator rejects any resolved or referenced vulnerable 7.x/8.x edge,
+    and the complete-lock audit is a required hosted security step.
+trivy_license_evidence:
+  failed_pr_2_security_run: 33297848808
+  github_conclusion: success
+  acceptance_valid: false
+  partial_json_sha256: afd658c0d994e2c28312ff0d00b943142128e8368d1727ca616ca381ef22cf9
+  partial_license_record_count: 0
+  correction: >-
+    Install the complete frozen Node and Python environments, capture all Trivy license
+    severities without suppression, then fail closed unless non-empty Node and Python sentinel
+    coverage and the explicit AGPL/GPL/SSPL deny policy pass.
+  lineage_corrected_local_result:
+    status: passed
+    command_mode: offline with the existing Trivy database and checks bundle; no update or suppression
+    license_json_sha256: 61822c1882e690b85b0359ff5408faa6046bda1249b0c392bf3a0f34a6816da3
+    license_record_count: 1342
+    node_package_count: 1094
+    python_package_count: 156
+    denied_agpl_gpl_sspl_count: 0
+trivy_vulnerability_secret_misconfiguration_evidence:
+  lineage_corrected_local_result:
+    status: passed
+    command_mode: offline with --skip-db-update --skip-check-update --offline-scan
+    json_sha256: 6d5406e91fbfb7007cf261c5e2f76ee2f00abb1216cb073ec21b5d8a3288ff2a
+    trivy_result_count: 4
+    pnpm_package_count: 883
+    uv_package_count: 168
+    high_critical_vulnerability_count: 0
+    misconfiguration_count: 0
+    secret_count: 0
+    undici_versions: [7.29.0, 8.10.0]
+legacy_poc_preservation:
+  package_lock_sha256: 5222d716a8480a61d417ec2efef1d5da44741f1c3d2a12ea87a778e3339650ff
+  package_manifest_fixture: docs/evidence/wp-01/fixtures/legacy-poc/package.json
+  package_manifest_fixture_sha256: a2eabe04488069f70642240e8ec35f15652797875c3fd6d158fb74effabee404
+disabled_features:
+  - DF-001
+  - DF-002
+  - DF-003
+  - DF-004
+  - DF-005
+  - DF-006
+  - DF-007
+  - DF-008
+  - DF-009
+  - DF-010
+  - DF-011
+  - DF-012
+  - DF-013

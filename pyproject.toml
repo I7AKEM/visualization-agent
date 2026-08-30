@@ -1,0 +1,72 @@
+[project]
+name = "visualization-agent-foundation"
+version = "0.0.0"
+description = "Owner-independent Python foundation for the Production Visualization Agent."
+requires-python = "==3.12.*"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "anyio==4.14.2",
+  "bandit==1.9.4",
+  "build==1.6.0",
+  "cyclonedx-bom==7.3.1",
+  "hatchling==1.32.0",
+  "hypothesis==6.165.10",
+  "httpx==0.28.1",
+  "jsonschema==4.26.0",
+  "mutmut==3.7.0",
+  "mypy==2.3.1",
+  "pip-audit==2.10.1",
+  "pytest==9.1.1",
+  "pytest-anyio==0.0.0",
+  "pytest-cov==7.1.0",
+  "pyyaml==6.0.3",
+  "ruff==0.16.5",
+  "schemathesis==4.25.2",
+  "testcontainers==4.15.0",
+  "types-pyyaml==6.0.12.20260815",
+]
+
+[tool.uv]
+package = false
+required-version = "==0.12.7"
+
+[tool.uv.workspace]
+members = [
+  "services/api",
+  "services/worker_analysis",
+  "services/worker_export",
+  "packages/contracts_py",
+  "packages/evals",
+]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+anyio_mode = "auto"
+testpaths = ["tests", "scripts/ci/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["services", "packages"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["agent", "demos", "ui", "out"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+exclude = "^(agent|demos|ui|out)/"
+
+[tool.bandit]
+exclude_dirs = ["agent", "demos", "ui", "out", "tests"]
+skips = []

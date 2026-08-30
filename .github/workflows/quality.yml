@@ -1,0 +1,197 @@
+name: WP-01 quality gates
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  COREPACK_HOME: ${{ github.workspace }}/.corepack
+  NEXT_TELEMETRY_DISABLED: "1"
+  ALLOW_MODEL_REQUESTS: "false"
+  PYDANTIC_AI_ALLOW_MODEL_REQUESTS: "false"
+  PYTHONPATH: ${{ github.workspace }}/scripts/ci/model_block
+  SOURCE_DATE_EPOCH: "315532800"
+  WP01_TESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  WP01_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+  WP01_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+
+jobs:
+  evidence-and-policy:
+    name: Schemas, evidence, locks, workflow policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out complete evidence history
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version-file: .python-version
+      - name: Set up locked uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.7"
+          enable-cache: false
+      - name: Frozen Python environment
+        run: uv sync --frozen --all-groups --all-packages
+      - name: Validate handoff and acceptance contracts
+        run: uv run python scripts/ci/validate_evidence.py
+      - name: Validate immutable CI policy
+        run: uv run python scripts/ci/validate_workflows.py
+      - name: Validate dependency-lock policy
+        run: uv run python scripts/ci/verify_lockfiles.py
+      - name: Exercise CI policy failure cases
+        run: uv run pytest -q scripts/ci/tests
+      - name: Verify durable LOCAL-RUNTIME evidence and checksums
+        run: uv run python scripts/ci/verify_runtime_evidence.py
+      - name: Check patch whitespace
+        run: git diff --check HEAD^
+
+  python:
+    name: Python format, lint, type, unit/property/contract foundations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version-file: .python-version
+      - name: Set up locked uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.7"
+          enable-cache: false
+      - name: Frozen Python environment
+        run: uv sync --frozen --all-groups --all-packages
+      - name: Prove real model requests are blocked
+        run: uv run python scripts/ci/assert_model_block.py
+      - name: Format check
+        run: uv run ruff format --check .
+      - name: Lint
+        run: uv run ruff check .
+      - name: Strict types
+        run: uv run mypy services packages
+      - name: Unit, property, and contract foundations
+        run: uv run pytest -q
+      - name: Build all Python workspace distributions
+        run: uv build --all-packages
+
+  node:
+    name: Node lint, type, unit/component, compatibility, build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Set up Node
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version-file: .node-version
+      - name: Resolve repository-pinned pnpm in the repository-local Corepack home
+        run: corepack pnpm --version
+      - name: Frozen Node environment
+        run: corepack pnpm install --frozen-lockfile
+      - name: Runtime and package-manager pin gate
+        run: corepack pnpm check:runtime
+      - name: Peer dependency gate
+        run: corepack pnpm check:peers
+      - name: Lint
+        run: corepack pnpm lint
+      - name: Strict types
+        run: corepack pnpm typecheck
+      - name: Unit, property, and component foundations
+        run: corepack pnpm test:unit
+      - name: Cross-workspace foundation tests
+        run: corepack pnpm test:foundation
+      - name: Adapter and contract compatibility foundations
+        run: corepack pnpm test:compat
+      - name: Production build
+        run: corepack pnpm build
+
+  local-runtime:
+    name: Frozen production web startup, HTTP probes, and shutdown
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact tested commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Set up Node
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version-file: .node-version
+      - name: Resolve repository-pinned pnpm in the repository-local Corepack home
+        run: corepack pnpm --version
+      - name: Frozen Node environment
+        run: corepack pnpm install --frozen-lockfile
+      - name: Deterministic production build
+        env:
+          NEXT_BUILD_ID: wp01-hosted-${{ env.WP01_TESTED_SHA }}
+        run: corepack pnpm --filter @visualization-agent/web build
+      - name: Capture exact runtime responses and graceful shutdown
+        run: |
+          mkdir -p artifacts/local-runtime
+          cp docs/evidence/wp-01/runtime/failure-retest.yaml artifacts/local-runtime/
+          python3 scripts/ci/capture_runtime_evidence.py \
+            --output-dir artifacts/local-runtime \
+            --host 127.0.0.1 \
+            --port 34101
+      - name: Verify captured runtime evidence
+        run: python3 scripts/ci/verify_runtime_evidence.py artifacts/local-runtime
+      - name: Upload exact runtime trace
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wp-01-local-runtime-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.WP01_TESTED_SHA }}
+          path: artifacts/local-runtime/
+          if-no-files-found: error
+          retention-days: 30
+
+  hosted-evidence:
+    name: Record exact hosted quality run context
+    needs: [evidence-and-policy, python, node, local-runtime]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact tested commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Write run identity after all required jobs pass
+        run: >-
+          python3 scripts/ci/write_hosted_run_manifest.py
+          --gate quality
+          --tested-sha ${{ env.WP01_TESTED_SHA }}
+          --output artifacts/hosted-ci/quality.json
+          --artifact-reference wp-01-quality-run-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.WP01_TESTED_SHA }}
+          --artifact-reference wp-01-local-runtime-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.WP01_TESTED_SHA }}
+      - name: Upload immutable run context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wp-01-quality-run-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.WP01_TESTED_SHA }}
+          path: artifacts/hosted-ci/quality.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,196 @@
+schema_version: 1
+record_type: wp_01_lineage_reconstruction
+work_package: WP-01
+status: reconstructed_on_accepted_integration_lineage
+base_integration_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+corrected_reference_delivery: c3577c390c32a76e99f736cef88e2e872bd80767
+reference_handoff: 22eec1da48579eedccf6852e32eedd3c0316426c
+common_ancestor: 0aca58ba95d5afd725834496e98d165b5b210a15
+ancestry_observation:
+  base_is_ancestor_of_reference_delivery: false
+  base_is_ancestor_of_reference_handoff: false
+  common_ancestor_matches_declared: true
+  correction_rule: >-
+    Recreate the reference-only files directly in the worktree at the exact base. Do not merge,
+    rebase, reset, cherry-pick, or copy the reference tree wholesale.
+integration_base_only_paths:
+  - path: docs/evidence/integration/execution-authorization.yaml
+    base_blob: 2bcaf0dc7eb2a8732a75d170d0202bd1d65cd371
+    resolution: preserve the accepted authorization record byte-for-byte
+  - path: docs/evidence/integration/wp-01-assignment.yaml
+    base_blob: b8e1cc14a511fb506a9fa60577a2ca0b849d53e6
+    resolution: preserve the current assignment and LOCAL-RUNTIME authorization byte-for-byte
+  - path: docs/production-spec/03_TEST_AND_FAILURE_MATRIX.md
+    base_blob: ce9538d90227a8cc233f90cbd066edf5513e490c
+    resolution: preserve the current normative LOCAL-RUNTIME test gate byte-for-byte
+  - path: docs/production-spec/06_TASK_DISPATCH_BRIEFS.md
+    base_blob: 2b3125c0c843818d11cc07a0abfeeab362f03c10
+    resolution: preserve the current normative dispatch and handoff protocol byte-for-byte
+overlap_resolution:
+  path_intersection_count: 0
+  semantic_overlap_count: 4
+  explanation: >-
+    The corrected reference retains the common-ancestor versions of the assignment and normative
+    specs and lacks the later execution authorization. The file-level reconstruction therefore
+    excludes all four integration-base-only paths and keeps their 804122a blobs. Reference evidence
+    that described the old divergent lineage is updated in WP-01-owned evidence files instead.
+reference_only_path_count: 128
+reference_only_paths:
+  - .gitattributes
+  - .github/codeql-config.yml
+  - .github/dependabot.yml
+  - .github/dependency-review-config.yml
+  - .github/workflows/dependency-review.yml
+  - .github/workflows/quality.yml
+  - .github/workflows/reproducibility.yml
+  - .github/workflows/security.yml
+  - .gitignore
+  - .node-version
+  - .npmrc
+  - .nvmrc
+  - .python-version
+  - REPRODUCIBILITY.md
+  - SECURITY.md
+  - apps/web/app/layout.tsx
+  - apps/web/app/page.tsx
+  - apps/web/eslint.config.mjs
+  - apps/web/next-env.d.ts
+  - apps/web/next.config.ts
+  - apps/web/package.json
+  - apps/web/scripts/prepare-standalone.mjs
+  - apps/web/src/compatibility/hydration.test.tsx
+  - apps/web/src/compatibility/stream-golden.test.ts
+  - apps/web/src/compatibility/ui-probe.tsx
+  - apps/web/tsconfig.json
+  - apps/web/vitest.config.ts
+  - datasets/eval/README.md
+  - datasets/fixtures/README.md
+  - docs/evidence/wp-01/README.md
+  - docs/evidence/wp-01/ci-security-foundation.yaml
+  - docs/evidence/wp-01/fixtures/legacy-poc/README.md
+  - docs/evidence/wp-01/fixtures/legacy-poc/package.json
+  - docs/evidence/wp-01/handoff.yaml
+  - docs/evidence/wp-01/hosted-ci.yaml
+  - docs/evidence/wp-01/node-compatibility.yaml
+  - docs/evidence/wp-01/node-dependencies.yaml
+  - docs/evidence/wp-01/ownership-scope.yaml
+  - docs/evidence/wp-01/python-compatibility.yaml
+  - docs/evidence/wp-01/python-dependencies.yaml
+  - docs/evidence/wp-01/runtime-smoke.yaml
+  - docs/evidence/wp-01/runtime/asset-headers.txt
+  - docs/evidence/wp-01/runtime/checksums.sha256
+  - docs/evidence/wp-01/runtime/client-asset.js
+  - docs/evidence/wp-01/runtime/failure-retest.yaml
+  - docs/evidence/wp-01/runtime/page-body.html
+  - docs/evidence/wp-01/runtime/page-headers.txt
+  - docs/evidence/wp-01/runtime/startup-shutdown.log
+  - docs/evidence/wp-01/runtime/trace.json
+  - docs/evidence/wp-01/version-license-sbom-manifest.yaml
+  - docs/runbooks/README.md
+  - infra/alerts/README.md
+  - infra/containers/README.md
+  - infra/dashboards/README.md
+  - infra/dev/README.md
+  - infra/dev/ci-tools.lock.json
+  - infra/dev/compose.yaml
+  - infra/migrations/README.md
+  - infra/otel/README.md
+  - package.json
+  - packages/contracts_py/README.md
+  - packages/contracts_py/pyproject.toml
+  - packages/contracts_py/src/visualization_agent_contracts/__init__.py
+  - packages/contracts_ts/README.md
+  - packages/contracts_ts/package.json
+  - packages/contracts_ts/src/index.ts
+  - packages/contracts_ts/tsconfig.json
+  - packages/evals/README.md
+  - packages/evals/pyproject.toml
+  - packages/evals/src/visualization_agent_evals/__init__.py
+  - packages/renderer_registry/README.md
+  - packages/renderer_registry/package.json
+  - packages/renderer_registry/src/index.ts
+  - packages/renderer_registry/tsconfig.json
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - pyproject.toml
+  - schemas/handoff-v1.schema.json
+  - schemas/integration-acceptance-v1.schema.json
+  - scripts/check-peer-compatibility.mjs
+  - scripts/check-runtime-pins.mjs
+  - scripts/ci/assert_model_block.py
+  - scripts/ci/audit_python_lock.sh
+  - scripts/ci/build_foundation_artifact.py
+  - scripts/ci/capture_runtime_evidence.py
+  - scripts/ci/install_ci_tool.py
+  - scripts/ci/model_block/sitecustomize.py
+  - scripts/ci/normalize_sbom.py
+  - scripts/ci/rebuild_foundation.py
+  - scripts/ci/reproducible_foundation.sh
+  - scripts/ci/scan_secrets.py
+  - scripts/ci/tests/test_ci_policy.py
+  - scripts/ci/tests/test_pnpm_execution_policy.py
+  - scripts/ci/validate_evidence.py
+  - scripts/ci/validate_licenses.py
+  - scripts/ci/validate_sbom.py
+  - scripts/ci/validate_trivy.py
+  - scripts/ci/validate_workflows.py
+  - scripts/ci/verify_lockfiles.py
+  - scripts/ci/verify_runtime_evidence.py
+  - scripts/ci/write_hosted_run_manifest.py
+  - scripts/generate-node-sbom.mjs
+  - scripts/prepare-sbom.mjs
+  - services/api/README.md
+  - services/api/pyproject.toml
+  - services/api/src/visualization_agent_api/__init__.py
+  - services/worker_analysis/README.md
+  - services/worker_analysis/pyproject.toml
+  - services/worker_analysis/src/visualization_agent_worker_analysis/__init__.py
+  - services/worker_export/README.md
+  - services/worker_export/pyproject.toml
+  - services/worker_export/src/visualization_agent_worker_export/__init__.py
+  - tests/chaos/README.md
+  - tests/compatibility/fixtures/README.md
+  - tests/compatibility/fixtures/ai-sdk-7-reference.sse
+  - tests/compatibility/fixtures/pydantic-ai-2.36.0-hitl.sse
+  - tests/compatibility/fixtures/pydantic-ai-2.36.0-text-custom.sse
+  - tests/compatibility/node/foundation.test.mjs
+  - tests/compatibility/python/test_vercel_ai_adapter.py
+  - tests/conftest.py
+  - tests/contract/README.md
+  - tests/e2e/README.md
+  - tests/integration/README.md
+  - tests/performance/README.md
+  - tests/security/README.md
+  - tests/unit/test_python_foundation.py
+  - tsconfig.base.json
+  - uv.lock
+substantive_reconstruction:
+  restored_reference_paths: 127
+  deferred_path: docs/evidence/wp-01/handoff.yaml
+  deferred_reason: >-
+    The handoff file is created only after the new substantive delivery commit and is the sole
+    diff in its direct child commit.
+additional_correction_evidence:
+  - docs/evidence/wp-01/lineage-reconstruction.yaml
+  - docs/evidence/wp-01/independent-reviews.yaml
+scope_resolution:
+  inert_scaffolds_outside_primary_path_shorthand:
+    - datasets/eval/README.md
+    - datasets/fixtures/README.md
+    - docs/runbooks/README.md
+    - infra/alerts/README.md
+    - infra/containers/README.md
+    - infra/dashboards/README.md
+    - infra/migrations/README.md
+    - infra/otel/README.md
+  resolution: >-
+    Retain these README-only placeholders because WP-01 must create the specified repository
+    structure and this correction is explicitly required to recreate the complete corrected WP-01
+    delivery. They contain no product behavior and do not claim ownership of later work packages.
+protected_poc:
+  base_blob_agent_fast_track: d13cb5351e45438dca897cfcf4ca0f0040e0309d
+  base_blob_agent_main: 101525dad8cd0d701cb88577913bc5d47104c9c6
+  base_out_tree: e7c6b25dca3533cf64369972dd64848b799d8f0b
+  base_out_tree_manifest_sha256: ea042d7476967f0e29c0952e9d6341c62eda9c02
+  changed_by_reconstruction: false
+  untracked_protected_paths_present_in_isolated_worktree: false

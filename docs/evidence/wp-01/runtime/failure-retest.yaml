@@ -1,0 +1,32 @@
+schema_version: 1
+record_type: wp_01_runtime_failure_retest
+work_package: WP-01
+failure:
+  command: Direct generated standalone server followed by GET of its first referenced client chunk.
+  page_status: 200
+  asset_status: 404
+  cause: Next standalone output did not contain the generated .next/static client assets.
+correction:
+  - apps/web/scripts/prepare-standalone.mjs copies .next/static and optional public assets into the standalone tree.
+  - apps/web/package.json starts the supported generated standalone server.
+retest:
+  durable_trace: docs/evidence/wp-01/runtime/trace.json
+  process_log: docs/evidence/wp-01/runtime/startup-shutdown.log
+  checksums: docs/evidence/wp-01/runtime/checksums.sha256
+  expected: Page and client asset return HTTP 200; SIGINT stops the server and no listener remains.
+lineage_correction_sandbox_attempt:
+  command: >-
+    capture_runtime_evidence.py --output-dir docs/evidence/wp-01/runtime
+    --host 127.0.0.1 --port 34110
+  exit_code: 1
+  cause: The default filesystem sandbox denied the loopback listen operation with EPERM.
+  product_defect: false
+  evidence_effect: The failed trace was retained until the authorized loopback retest replaced it.
+  retest:
+    authorization_scope: user-pre-authorized local service execution, subject to host approval
+    status: passed
+    expected: HTTP page and asset probes pass, SIGINT is graceful, and no listener remains.
+    result: HTTP page and generated client asset returned 200; SIGINT exited 130 without forced kill; no listener remained.
+reproducibility_scope: >-
+  The runtime response hash identifies this recorded smoke run only. Reproducibility is proven
+  separately by two clean builds with a fixed source identity and Next build ID.
