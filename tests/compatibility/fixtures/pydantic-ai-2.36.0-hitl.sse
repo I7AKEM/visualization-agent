@@ -1,0 +1,20 @@
+data: {"messageId":"server-message-1","type":"start"}
+
+data: {"type":"start-step"}
+
+data: {"toolCallId":"pyd_ai_tool_call_id__protected_action","toolName":"protected_action","type":"tool-input-start"}
+
+data: {"inputTextDelta":"{\"value\":\"a\"}","toolCallId":"pyd_ai_tool_call_id__protected_action","type":"tool-input-delta"}
+
+data: {"input":{"value":"a"},"toolCallId":"pyd_ai_tool_call_id__protected_action","toolName":"protected_action","type":"tool-input-available"}
+
+data: {"messageMetadata":{"pydantic_ai":{"timestamp":"1970-01-01T00:00:00Z"}},"type":"message-metadata"}
+
+data: {"approvalId":"pyd_ai_tool_call_id__protected_action","toolCallId":"pyd_ai_tool_call_id__protected_action","type":"tool-approval-request"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

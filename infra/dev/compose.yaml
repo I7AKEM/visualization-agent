@@ -1,0 +1,6 @@
+name: visualization-agent-foundation
+
+# WP-01 intentionally enables no runtime service. Production storage, identity,
+# model routes, maps, jobs, upload, publication, and export remain blocked by
+# the conditionally accepted WP-00 governance record.
+services: {}

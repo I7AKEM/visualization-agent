@@ -1,0 +1,56 @@
+name: WP-01 dependency and license review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  COREPACK_HOME: ${{ github.workspace }}/.corepack
+  NEXT_TELEMETRY_DISABLED: "1"
+  WP01_TESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  WP01_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+  WP01_PR_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+
+jobs:
+  dependency-review:
+    name: Added dependency vulnerabilities and licenses
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@05fe4576374b728f0c523d6a13d64c25081e0803 # v4.8.3
+        with:
+          config-file: ./.github/dependency-review-config.yml
+
+  hosted-evidence:
+    name: Record exact hosted dependency-review run context
+    needs: [dependency-review]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact tested commit
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.WP01_TESTED_SHA }}
+      - name: Write run identity after dependency review passes
+        run: >-
+          python3 scripts/ci/write_hosted_run_manifest.py
+          --gate dependency-review
+          --tested-sha ${{ env.WP01_TESTED_SHA }}
+          --output artifacts/hosted-ci/dependency-review.json
+          --artifact-reference wp-01-dependency-review-run-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.WP01_TESTED_SHA }}
+      - name: Upload immutable run context
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wp-01-dependency-review-run-${{ github.run_id }}-${{ github.run_attempt }}-${{ env.WP01_TESTED_SHA }}
+          path: artifacts/hosted-ci/dependency-review.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,22 @@
+data: {"messageId":"server-message-1","type":"start"}
+
+data: {"type":"start-step"}
+
+data: {"id":"text-part-1","type":"text-start"}
+
+data: {"delta":"Compatibility ","id":"text-part-1","type":"text-delta"}
+
+data: {"delta":"passed.","id":"text-part-1","type":"text-delta"}
+
+data: {"id":"text-part-1","type":"text-end"}
+
+data: {"data":{"progress":1.0,"stage":"complete"},"id":"run-status-1","type":"data-run-status"}
+
+data: {"messageMetadata":{"pydantic_ai":{"timestamp":"1970-01-01T00:00:00Z"}},"type":"message-metadata"}
+
+data: {"type":"finish-step"}
+
+data: {"type":"finish"}
+
+data: [DONE]
+

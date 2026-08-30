@@ -1,0 +1,237 @@
+schema_version: 1
+record_type: wp_01_ci_security_foundation
+work_package: WP-01
+assignment_base_commit: 0aca58ba95d5afd725834496e98d165b5b210a15
+status: immutable_pr_2_failed_correction_local_gates_passed_hosted_exact_commit_pending
+production_approved: false
+requirements:
+  - GOV-001
+  - GOV-002
+  - GOV-004
+  - GOV-008
+  - GOV-013
+owned_scope:
+  - .github/**
+  - infra/dev/**
+  - scripts/ci/**
+  - schemas/handoff-v1.schema.json
+  - schemas/integration-acceptance-v1.schema.json
+  - SECURITY.md
+  - REPRODUCIBILITY.md
+  - docs/evidence/wp-01/ci-security-foundation.yaml
+  - docs/evidence/wp-01/hosted-ci.yaml
+  - docs/evidence/wp-01/ownership-scope.yaml
+ci_gates:
+  quality:
+    workflow: .github/workflows/quality.yml
+    covers:
+      - formatting
+      - lint
+      - strict_types
+      - schema_and_evidence_relationships
+      - unit_property_contract_component_foundations
+      - adapter_compatibility_foundations
+      - production_build
+      - frozen_lock_integrity
+      - real_model_request_block
+  security:
+    workflow: .github/workflows/security.yml
+    covers:
+      - tracked_and_history_secret_patterns
+      - bandit_sast
+      - pip_audit
+      - pnpm_production_audit
+      - pnpm_complete_lock_audit_including_development_toolchains
+      - checksum_verified_trivy_vulnerability_secret_and_misconfiguration_scan
+      - complete_installed_node_and_python_trivy_license_evidence
+      - fail_closed_nonempty_ecosystem_license_assertions
+      - codeql_python_javascript_typescript
+  dependency_review:
+    workflow: .github/workflows/dependency-review.yml
+    covers:
+      - added_dependency_advisories
+      - added_dependency_licenses
+  reproducibility:
+    workflow: .github/workflows/reproducibility.yml
+    covers:
+      - frozen_uv_and_pnpm_install
+      - foundation_builds
+      - cyclonedx_node_and_python_sboms
+      - sbom_structure_version_and_direct_tool_license_validation
+      - sha256_evidence
+      - twice_built_byte_identical_normalized_foundation_artifact
+supply_chain_controls:
+  action_lock: infra/dev/ci-tools.lock.json
+  action_reference_policy: reviewed 40-hex Git commit only
+  runner_policy: ubuntu-24.04 only; floating latest labels rejected
+  dependency_policy: exact declarations plus committed pnpm and uv locks
+  advisory_override_policy: >-
+    Only the reviewed @cyclonedx/cdxgen 12.8.4 and cheerio 1.2.0 parent edges override undici to
+    patched 7.29.0. Static policy rejects override drift and any resolved 7.x below 7.29.0 or 8.x
+    below 8.9.0; suppression and advisory ignores are forbidden.
+  package_manager_policy: >-
+    pnpm 10.34.5 from package.json is invoked as corepack pnpm with COREPACK_HOME inside
+    the checkout; corepack enable/global shim mutation and root npm/yarn locks are rejected
+  global_install_policy: forbidden
+  mutable_container_policy: forbidden
+  preserved_poc_scan_policy: >-
+    Secret/history scanning includes the preserved POC. Production dependency/SAST scans
+    exclude agent, demos, ui, out, and the frozen legacy package-lock because WP-00 records
+    them as prohibited production paths rather than WP-01 production dependencies.
+  excluded_tools:
+    - tool: aquasecurity/trivy-action
+      reason: >-
+        The wrapper action is not admitted after GHSA-69fq-xp46-6x23. CI downloads
+        the immutable Trivy v0.73.0 Linux asset directly into /tmp and verifies its
+        committed SHA-256 before execution; it is never installed globally.
+      source: https://github.com/aquasecurity/trivy/security/advisories/GHSA-69fq-xp46-6x23
+model_request_control:
+  normal_ci_allows_live_models: false
+  mechanism:
+    - Pydantic AI ALLOW_MODEL_REQUESTS is forced false through CI sitecustomize.
+    - Provider credential names are absent from ordinary workflows and checked at runtime.
+    - No eval/live-provider workflow is enabled by WP-01.
+schemas:
+  - path: schemas/handoff-v1.schema.json
+    validator: scripts/ci/validate_evidence.py
+  - path: schemas/integration-acceptance-v1.schema.json
+    validator: scripts/ci/validate_evidence.py
+git_relationships_validated:
+  - base integration commit is an ancestor of delivery commit
+  - delivery diff equals ordered changed_paths
+  - handoff commit is the direct child of delivery and changes only handoff.yaml
+  - accepted handoff anchors match its acceptance record
+  - acceptance record introduction parent equals acceptance_base_commit
+  - specification commit contains all seven normative documents
+local_results:
+  - command: corepack pnpm install --frozen-lockfile
+    exit_code: 0
+    result: 789 locked packages installed through pnpm 10.34.5 into the repository-local ignored store; unrs-resolver build script remained blocked.
+  - command: uv sync --frozen --all-packages --group dev
+    exit_code: 0
+    result: Checked 161 locked packages for five Python workspace members with uv 0.12.7 and Python 3.12.14.
+  - command: NEXT_TELEMETRY_DISABLED=1 corepack pnpm verify
+    exit_code: 0
+    result: Runtime and peer pins, ESLint, strict repository types, Node foundation 4/4, web compatibility/unit 4/4, empty package builds, and Next 16.3.3 production build passed.
+  - command: See docs/evidence/wp-01/runtime-smoke.yaml
+    exit_code: 0
+    result: The generated Next.js standalone server returned HTTP 200 for both the foundation page and a client asset, then stopped on SIGINT with no listener remaining; all Python service package boundaries imported successfully.
+  - command: .venv/bin/pytest -q
+    exit_code: 0
+    result: >-
+      All 57 tests passed: the Python compatibility/unit foundations plus 52 CI policy/security
+      cases, including fail-closed Trivy completeness and undici advisory regressions. The exact
+      final count is repeated in the handoff after delivery.
+  - command: .venv/bin/ruff format --check . && .venv/bin/ruff check . && .venv/bin/mypy services packages
+    exit_code: 0
+    result: Formatting and lint passed; strict mypy found no issues in five Python source files.
+  - command: .venv/bin/bandit -q -r services packages
+    exit_code: 0
+    result: Python SAST passed for all production scaffolds.
+  - command: UV_CACHE_DIR=/private/tmp/wp01-uv-cache /private/tmp/wp01-uv-0.12.7/uv build --all-packages
+    exit_code: 0
+    result: >-
+      All five Python workspace packages produced both source distributions and wheels under
+      SOURCE_DATE_EPOCH=315532800; the exact filenames are recorded in the corrected handoff.
+  - command: corepack pnpm audit --audit-level high
+    exit_code: 1
+    result: >-
+      The sandboxed npm audit POST failed DNS resolution. Escalation was rejected because the POST
+      exports dependency metadata, so no local green audit is claimed; the corrected hosted
+      complete-lock audit remains mandatory.
+  - command: scripts/ci/audit_python_lock.sh
+    exit_code: 0
+    result: The exact Python lock reported no known vulnerabilities.
+  - command: scripts/ci/validate_sbom.py and scripts/ci/validate_licenses.py
+    exit_code: 0
+    result: >-
+      CycloneDX Node 883/Python 161 component SBOMs passed structure, exact-version,
+      checkout-path normalization, checksum, direct/tool-license, and provisional deny-list
+      gates. The 182 missing transitive/platform license fields remain blocked on hosted review.
+  - command: scripts/ci/validate_evidence.py && scripts/ci/validate_workflows.py && scripts/ci/verify_lockfiles.py
+    exit_code: 0
+    result: Existing evidence Git relationships, four workflows/seven action pins, exact dependency declarations, both locks, and frozen POC lock passed.
+  - command: scripts/ci/scan_secrets.py --history
+    exit_code: 0
+    result: PASS current tracked/untracked text plus Git patch history; findings never echo values.
+  - command: scripts/ci/reproducible_foundation.sh /private/tmp/wp01-security-correction-repro-precommit
+    exit_code: 0
+    result: >-
+      Corrected preflight used a PATH containing node, Corepack, and uv but no pnpm executable,
+      two distinct clean frozen-lock workspaces, deterministic Next build entropy/ID, and
+      checkout-prefix normalization. It compared 1,359 complete generated files and
+      byte-identical archives at sha256:32ab0d78c38ddf6fde14e631752a5335f6643da50c602d12f866135d50f8862d.
+  - command: >-
+      python3 scripts/ci/install_ci_tool.py trivy --output-dir /private/tmp/wp01-ci-tools
+      --archive /private/tmp/trivy_0.73.0_Linux-64bit.tar.gz
+    exit_code: 0
+    result: PASS immutable Trivy v0.73.0 Linux asset verified and extracted from sha256:2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b.
+  - command: >-
+      trivy rootfs --scanners license --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL ... .;
+      .venv/bin/python scripts/ci/validate_trivy.py
+      /private/tmp/wp01-security-correction-trivy/trivy-licenses.json
+    exit_code: 0
+    result: >-
+      Checksum-reviewed Trivy v0.73.0 macOS ARM64 produced 1,342 unsuppressed license rows.
+      Fail-closed validation found 1,094 Node package names, 156 Python package names, every
+      required cdxgen/Next/React/CycloneDX/FastAPI/Pydantic sentinel, and no denied
+      AGPL/GPL/SSPL license. The raw JSON was
+      sha256:3741ed0058a8febe29ec948f83557322483a6f799a859bb2dce6165468c2cb23.
+  - command: >-
+      trivy filesystem --scanners vuln,misconfig,secret --include-dev-deps
+      --severity HIGH,CRITICAL --exit-code 1 ... .
+    exit_code: 0
+    result: >-
+      Trivy v0.73.0 found zero HIGH/CRITICAL findings across 883 pnpm lock packages and 168 uv
+      lock packages; the package list contained only undici 7.29.0 and 8.10.0. The raw JSON was
+      sha256:8d3b9e9d3446ea9e62de1a30f055919645f8cd2bbb2fcde57ce277a6f123b823.
+immutable_pr_2_results:
+  pull_request: https://github.com/I7AKEM/visualization-agent/pull/2
+  exact_head: 3db99620f038761cd9f32ba9f206963d87fcc277
+  exact_base: 804122a0b9602205ec368e96b8172736b09bb1c7
+  quality_run_33297848869: success
+  security_run_33297848808: >-
+    GitHub success but acceptance-invalid: the Trivy JSON had two results, pnpm 284 packages,
+    uv one root, and zero license rows because neither frozen dependency environment was installed.
+  dependency_review_run_33297848886: >-
+    Failure on undici@7.28.0, GHSA-4cwx-7wf7-3272 / CVE-2026-13697.
+  reproducibility_run_33297848829: success
+  codeql_analysis_1693478673: >-
+    Exact PR head, category /language:foundation, zero results. These immutable successes do not
+    transfer to the corrected handoff SHA.
+tests_not_run:
+  - >-
+    Green hosted quality, GitHub dependency review/license evaluation, CodeQL upload, complete
+    Linux Trivy evidence, and reproducibility runs for the exact corrected handoff commit require
+    an external push/PR/dispatch. Those actions remain excluded, so WP-01 acceptance and use as
+    dependency evidence are blocked.
+  - A clean-room cross-host/container rebuild, signed provenance/attestation, and image scan are WP-14 release gates and are not claimed.
+  - No production container image exists in WP-01, so Trivy scans the repository filesystem and misconfiguration sources; promoted-image scanning remains a later gate.
+disabled_features:
+  - DF-001
+  - DF-002
+  - DF-003
+  - DF-004
+  - DF-005
+  - DF-006
+  - DF-007
+  - DF-008
+  - DF-009
+  - DF-010
+  - DF-011
+  - DF-012
+  - DF-013
+known_risks:
+  - The local secret scanner is deterministic and conservative but does not replace the repository host's secret-scanning service.
+  - The license deny list is a conservative engineering gate, not final legal approval.
+  - Dependency vulnerability databases are mutable external inputs; CI reports are reproducible only with their recorded run timestamp and database state.
+  - GitHub-hosted action execution still trusts GitHub and the pinned upstream commit ancestry; a 40-hex reference alone is not an attestation.
+  - setup-uv is commit-pinned and requests exact uv 0.12.7, but the workflow does not maintain a second repository copy of setup-uv's upstream binary checksum verification metadata.
+  - >-
+    Local passes do not waive the mandatory exact-handoff hosted CI gate. No run URL/ID,
+    conclusion, Dependency Review pass, corrected CodeQL analysis, or complete Linux Trivy artifact
+    is claimed. PR #2 identities and partial/failing evidence are recorded separately as historical.
+rollback_steps:
+  - Remove the four WP-01 workflow files to stop CI execution without changing runtime code.
+  - Remove scripts/ci, the two schemas, infra/dev, SECURITY.md, REPRODUCIBILITY.md, and this evidence fragment to withdraw the foundation policy.
+  - Do not alter Node/Python manifests or preserved POC files as part of this rollback.

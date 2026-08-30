@@ -1,0 +1,161 @@
+schema_version: 1
+record_type: wp_01_runtime_smoke
+work_package: WP-01
+recorded_at: 2026-08-30
+status: passed
+production_approved: false
+specification_commit: 804122a0b9602205ec368e96b8172736b09bb1c7
+toolchains:
+  node: /private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin/node 24.20.0
+  pnpm: Corepack-managed pnpm 10.34.5 with repository-local store
+  python: .venv/bin/python 3.12.14 from the uv 0.12.7 frozen workspace
+web_production_shell:
+  build:
+    command: >-
+      PATH=/private/tmp/wp01-node.2MWnTu/shims:/private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin:/usr/bin:/bin
+      COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack
+      NEXT_TELEMETRY_DISABLED=1
+      NEXT_BUILD_ID=wp01-runtime-correction-v2
+      corepack pnpm --filter @visualization-agent/web build
+    exit_code: 0
+    log: |-
+      Next.js 16.3.3 (Turbopack)
+      Compiled successfully
+      Generating static pages using 4 workers (3/3)
+      standalone runtime assets prepared
+  startup:
+    command: >-
+      PATH=/private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin:/usr/bin:/bin
+      COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack
+      HOSTNAME=127.0.0.1 PORT=34101
+      corepack pnpm --filter @visualization-agent/web start
+    host: 127.0.0.1
+    port: 34101
+    log: |-
+      > @visualization-agent/web@0.0.0 start
+      > node .next/standalone/apps/web/server.js
+      Next.js 16.3.3
+      Local: http://127.0.0.1:34101
+      Ready in 0ms
+      Running next.config took 10ms
+  page_probe:
+    command: >-
+      PATH=/private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin:/usr/bin:/bin
+      COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack
+      .venv/bin/python scripts/ci/capture_runtime_evidence.py
+      --output-dir docs/evidence/wp-01/runtime --host 127.0.0.1 --port 34101
+    exit_code: 0
+    response:
+      status: HTTP/1.1 200 OK
+      content_type: text/html; charset=utf-8
+      content_length: 4673
+      body_assertion: <h1>Visualization Agent</h1>
+      sha256: 25024df12beb9ec369aa315314bb70343db71ef56f9974dc307e5b83fd55c691
+      durable_headers: docs/evidence/wp-01/runtime/page-headers.txt
+      durable_body: docs/evidence/wp-01/runtime/page-body.html
+  client_asset_probe:
+    command: >-
+      The same capture_runtime_evidence.py process parsed the generated page and requested
+      GET /_next/static/chunks/0dx55gb0etii_.js over its loopback HTTP connection.
+    exit_code: 0
+    response:
+      status: 200
+      bytes: 16891
+      sha256: 6b1d5556b9a152c3cda207b3c932c8b4018b0a83da91e911d32aba98a60c9502
+      durable_headers: docs/evidence/wp-01/runtime/asset-headers.txt
+      durable_body: docs/evidence/wp-01/runtime/client-asset.js
+  shutdown:
+    action: SIGINT sent through the controlling terminal
+    process_exit_code: 130
+    process_log: >-
+      pnpm reported the expected signal-derived Exit status 130 after Ctrl-C.
+    forced_kill: false
+    shutdown_error: null
+    listener_check_command: /usr/sbin/lsof -nP -iTCP:34101 -sTCP:LISTEN
+    listener_check_exit_code: 1
+    listener_check_result: No process remained listening on TCP port 34101.
+  corrective_observation: >-
+    The first direct standalone probe returned the page but a client asset returned 404.
+    The build now copies .next/static (and public when present) into the generated
+    standalone tree, and the supported start script runs that standalone entry point.
+  dependency_failure_behavior:
+    status: not_applicable
+    rationale: >-
+      The WP-01 web shell has no database, cache, object store, API, worker, provider,
+      or other runtime dependency configured. Introducing one would begin a later work package.
+python_boundaries:
+  command: >-
+    .venv/bin/python -c 'import visualization_agent_api,
+    visualization_agent_worker_analysis, visualization_agent_worker_export;
+    print("PASS: imported visualization_agent_api,
+    visualization_agent_worker_analysis, visualization_agent_worker_export")'
+  exit_code: 0
+  output: >-
+    PASS: imported visualization_agent_api, visualization_agent_worker_analysis,
+    visualization_agent_worker_export
+  runtime_entry_points: []
+  ports: []
+  process_shutdown: not_applicable_import_completed_normally
+  rationale: >-
+    WP-01 intentionally establishes importable, empty package boundaries only. It does not
+    claim a FastAPI ASGI application, worker loop, console script, queue, or health endpoint;
+    inventing those would begin later work packages.
+other_foundation_boundaries:
+  node_package_start_scripts:
+    - '@visualization-agent/web'
+  python_console_scripts: []
+  compose_services: []
+  contracts_and_renderer_packages: build_only_empty_scaffolds
+local_runtime_subgates:
+  frozen_lock_start_health_shutdown:
+    status: passed
+    rationale: The sole owned runnable web shell built, started, served its page and client asset, and left no listener after SIGINT.
+  offline_agent_api_and_stream:
+    status: not_applicable
+    rationale: >-
+      WP-01 owns dependency compatibility only; WP-03 owns the first API/state path,
+      WP-05 owns the first real local streaming UI path, and WP-06 owns logical agents.
+      The exact offline Pydantic-to-AI-SDK event fixtures were nevertheless generated and consumed.
+  wp_05_plus_real_ui:
+    status: not_applicable
+    rationale: Browser/Playwright user flows begin with WP-05; WP-01 owns no interactive product behavior.
+  later_package_suite_extension:
+    status: not_applicable
+    rationale: Renderer, map/temporal, and export runtime suites begin in WP-08, WP-09, and WP-12 respectively.
+deferred_to_owning_work_packages:
+  - real chat, upload, command, health, and streaming API routes
+  - analysis and export worker loops and queue connectivity
+  - live model/provider calls and credentials
+offline_model_evidence:
+  requests_allowed: false
+  mechanisms:
+    - Pydantic TestModel compatibility tests
+    - recorded Pydantic AI 2.36.0 VercelAIAdapter SSE fixtures
+    - ALLOW_MODEL_REQUESTS=false and PYDANTIC_AI_ALLOW_MODEL_REQUESTS=false
+  fixture_hashes:
+    pydantic_ai_text_custom_sse: 9da93e51aa45ee25c786109e97f0d0e235c86e8ea5320b8c199a8aa381be6841
+    pydantic_ai_hitl_sse: ec2680c9a3baba72bd8775fe13af6c330186af331f511645230e45dc5d10fb4d
+    ai_sdk_reference_sse: 504b874bade26fda75c6d0fd1e76e4e2b1e23c0d77aa0406df9f7af7b19192ad
+dataset_result_artifact_hashes:
+  datasets: not_applicable_wp_01_owns_no_runtime_dataset
+  reproducibility_scope: >-
+    The page hash below identifies this runtime observation only. It is not used as proof of
+    build reproducibility because generated HTTP metadata can differ across runs. The independent
+    clean-build gate compares the complete generated tree under one deterministic Next build ID.
+  result_artifacts:
+    - path: docs/evidence/wp-01/runtime/page-body.html
+      sha256: 25024df12beb9ec369aa315314bb70343db71ef56f9974dc307e5b83fd55c691
+      scope: run_specific_http_response_not_reproducibility_proof
+    - path: docs/evidence/wp-01/runtime/client-asset.js
+      sha256: 6b1d5556b9a152c3cda207b3c932c8b4018b0a83da91e911d32aba98a60c9502
+    - path: docs/evidence/wp-01/runtime/trace.json
+      sha256: dc2b40b672d34118725f8fbb363cd3e0071d7b14a7eac239145b6be3ecf224bf
+    - path: docs/evidence/wp-01/runtime/startup-shutdown.log
+      sha256: baf049408072288ca17ea56761aadb79e3ca7879a79c5f66b6bd87283c07f853
+    - path: docs/evidence/wp-01/runtime/checksums.sha256
+      sha256: 5e17fa1ee366d7ae4490694aadf25e899121fd6cc82a47a9fcac0c3227d8283f
+failures_and_retests:
+  record: docs/evidence/wp-01/runtime/failure-retest.yaml
+  result: >-
+    The original asset 404 is preserved with its correction. The durable retest recorded page
+    and asset HTTP 200, exit 130 after SIGINT, no forced kill, and no remaining listener.
