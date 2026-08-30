@@ -1,6 +1,6 @@
 schema_version: 1
 work_package: WP-01
-lock_date: 2026-08-29
+lock_date: 2026-08-30
 selection_policy: latest non-prerelease patch in each production-spec train on lock date
 production_package_manager:
   name: pnpm
@@ -11,8 +11,42 @@ production_package_manager:
   integrity_note: Package integrity is evidence metadata; pnpm 10.34.5 package-manager-strict-version rejects a Corepack hash suffix in packageManager.
   source: https://registry.npmjs.org/pnpm/10.34.5
   production_lock: pnpm-lock.yaml
-  production_lock_sha256: 5a0eaf02eeca595ac9dfec2c9fad250463e123a1aef4c09244a0027dd4609252
+  production_lock_sha256: 8d6fc525202ee500fea05e9341e5e5a8c377ba5a59509c118f59ae1705ff4390
   repository_local_store: .pnpm-store
+security_remediation:
+  advisory: GHSA-4cwx-7wf7-3272
+  cve: CVE-2026-13697
+  affected_ranges:
+    - ">=7.0.0,<7.29.0"
+    - ">=8.0.0,<8.9.0"
+  advisory_source: https://github.com/advisories/GHSA-4cwx-7wf7-3272
+  reviewed_override:
+    - parent: "@cyclonedx/cdxgen@12.8.4"
+      dependency: undici
+      resolution: 7.29.0
+    - parent: cheerio@1.2.0
+      dependency: undici
+      resolution: 7.29.0
+  compatibility_basis: >-
+    The old @cyclonedx/cdxgen package's live latest remains 12.8.4 and directly pins
+    undici 7.28.0. Its cheerio 1.2.0 dependency accepts undici ^7.19.0, and undici 7.29.0
+    preserves the Node >=20.18.1 engine and the exports used by cdxgen while applying the first
+    patched 7.x release. The renamed @cdxgen/cdxgen 13.0.1 requires pnpm >=11 and Node >=24;
+    it is not compatible with the normative pnpm 10 baseline and is not the smallest correction.
+  primary_sources:
+    - https://registry.npmjs.org/%40cyclonedx%2Fcdxgen
+    - https://registry.npmjs.org/%40cyclonedx%2Fcdxgen/12.8.4
+    - https://registry.npmjs.org/cheerio/1.2.0
+    - https://registry.npmjs.org/undici/7.29.0
+    - https://github.com/nodejs/undici/releases/tag/v7.29.0
+    - https://registry.npmjs.org/%40cdxgen%2Fcdxgen/13.0.1
+    - https://github.com/pnpm/pnpm/blob/v10.34.5/config/parse-overrides/README.md
+  lock_proof:
+    resolved_undici_versions: [7.29.0, 8.10.0]
+    vulnerable_7_28_0_present: false
+    every_7_x_at_least_7_29_0: true
+    every_8_x_at_least_8_9_0: true
+    validator: scripts/ci/verify_lockfiles.py
 runtime:
   name: node
   version: 24.20.0
@@ -103,6 +137,7 @@ tooling:
     license: Apache-2.0
     integrity: sha512-9EMER2beUSU7fvKgVaYOnYCFqAHrY3bQ7ERenh29/Edku0ctEXzYdov6vCmjmo/hSBH+JtvA7+j1U884MVYFOA==
     source: https://registry.npmjs.org/%40cyclonedx%2fcdxgen/12.8.4
+    undici_resolution: 7.29.0 through reviewed parent-scoped pnpm override
   "@testing-library/dom":
     version: 10.4.1
     license: MIT

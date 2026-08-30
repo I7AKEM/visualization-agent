@@ -11,11 +11,19 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+import yaml
+from packaging.version import InvalidVersion, Version
+
 ROOT = Path(__file__).resolve().parents[2]
 EXCLUDED_PARTS = {".git", ".next", ".venv", "node_modules", "docs", "agent", "artifacts"}
 MUTABLE_NODE_PREFIXES = ("^", "~", ">", "<", "latest", "next", "beta", "alpha", "rc")
 BOUNDED_PEER_RANGE = re.compile(r"([~^]?)([0-9]+)[.]([0-9]+)[.]([0-9]+)")
 LEGACY_POC_PACKAGE_LOCK_SHA256 = "5222d716a8480a61d417ec2efef1d5da44741f1c3d2a12ea87a778e3339650ff"
+EXPECTED_UNDICI_OVERRIDES = {
+    "@cyclonedx/cdxgen@12.8.4>undici": "7.29.0",
+    "cheerio@1.2.0>undici": "7.29.0",
+}
+UNDICI_PATCH_FLOORS = {7: Version("7.29.0"), 8: Version("8.9.0")}
 
 
 def fail(message: str) -> None:
@@ -36,6 +44,76 @@ def production_package_jsons() -> list[Path]:
         for path in ROOT.rglob("package.json")
         if not any(part in EXCLUDED_PARTS for part in path.relative_to(ROOT).parts)
     )
+
+
+def validate_undici_security(
+    root_manifest: dict[str, Any], lock_document: dict[str, Any]
+) -> tuple[str, ...]:
+    """Reject advisory-vulnerable undici resolutions and override drift."""
+
+    root_pnpm = root_manifest.get("pnpm", {})
+    root_overrides = root_pnpm.get("overrides", {}) if isinstance(root_pnpm, dict) else {}
+    lock_overrides = lock_document.get("overrides", {})
+    if root_overrides != EXPECTED_UNDICI_OVERRIDES:
+        raise ValueError("package.json must contain exactly the reviewed undici overrides")
+    if lock_overrides != EXPECTED_UNDICI_OVERRIDES:
+        raise ValueError("pnpm-lock.yaml must contain exactly the reviewed undici overrides")
+
+    resolved_versions: set[Version] = set()
+    for section_name in ("packages", "snapshots"):
+        section = lock_document.get(section_name, {})
+        if not isinstance(section, dict):
+            raise ValueError(f"pnpm-lock.yaml {section_name} must be a mapping")
+        for key in section:
+            match = re.fullmatch(r"undici@([^()]+)", str(key))
+            if not match:
+                continue
+            try:
+                resolved_versions.add(Version(match.group(1)))
+            except InvalidVersion as exc:
+                raise ValueError(f"invalid undici resolution {key}") from exc
+
+    if not resolved_versions:
+        raise ValueError("pnpm-lock.yaml contains no undici resolution to validate")
+    for version in sorted(resolved_versions):
+        floor = UNDICI_PATCH_FLOORS.get(version.major)
+        if floor is not None and version < floor:
+            raise ValueError(
+                f"advisory-vulnerable undici@{version} is below the {floor} patch floor"
+            )
+
+    snapshots = lock_document.get("snapshots", {})
+    assert isinstance(snapshots, dict)
+    for parent in ("@cyclonedx/cdxgen@12.8.4", "cheerio@1.2.0"):
+        snapshot = snapshots.get(parent)
+        dependencies = snapshot.get("dependencies", {}) if isinstance(snapshot, dict) else {}
+        if dependencies.get("undici") != "7.29.0":
+            raise ValueError(f"{parent} must resolve undici to the reviewed 7.29.0 patch")
+
+    def walk(value: Any, path: tuple[str, ...] = ()) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                child_path = (*path, str(key))
+                if key == "undici" and isinstance(child, str):
+                    match = re.match(r"([0-9]+[.][0-9]+[.][0-9]+)", child)
+                    if not match:
+                        raise ValueError(
+                            f"unparseable undici edge at {'/'.join(child_path)}: {child}"
+                        )
+                    edge_version = Version(match.group(1))
+                    floor = UNDICI_PATCH_FLOORS.get(edge_version.major)
+                    if floor is not None and edge_version < floor:
+                        raise ValueError(
+                            f"advisory-vulnerable undici edge at {'/'.join(child_path)}: "
+                            f"{edge_version}"
+                        )
+                walk(child, child_path)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, (*path, str(index)))
+
+    walk(lock_document)
+    return tuple(str(version) for version in sorted(resolved_versions))
 
 
 def check_node() -> int:
@@ -115,6 +193,17 @@ def check_node() -> int:
     lock_text = lock.read_text(encoding="utf-8")
     if "<<<<<<<" in lock_text or "lockfileVersion:" not in lock_text:
         fail("pnpm-lock.yaml is malformed or contains merge markers")
+    lock_document = yaml.safe_load(lock_text)
+    if not isinstance(lock_document, dict):
+        fail("pnpm-lock.yaml must contain a YAML mapping")
+    try:
+        undici_versions = validate_undici_security(root, lock_document)
+    except ValueError as exc:
+        fail(str(exc))
+    print(
+        "PASS: GHSA-4cwx-7wf7-3272 remediation is locked; undici resolutions: "
+        + ", ".join(undici_versions)
+    )
     return len(manifests)
 
 

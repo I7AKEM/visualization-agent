@@ -1,7 +1,7 @@
 schema_version: 1
 record_type: wp_01_hosted_ci_requirement
 work_package: WP-01
-status: failed_old_handoff_correction_local_verification_passed_exact_hosted_reruns_pending
+status: immutable_pr_2_failed_correction_local_precommit_passed_exact_delivery_and_hosted_reruns_pending
 acceptance_blocked: true
 production_approved: false
 exact_ref_rule: >-
@@ -29,7 +29,7 @@ required_artifacts:
   - security hosted run context, Trivy JSON, and CodeQL category reference
   - dependency-review hosted run context
   - reproducibility hosted run context, SBOM checksums, two-build provenance, generated manifests, and normalized archives
-immutable_failed_handoff:
+immutable_failed_handoff_pr_1:
   pull_request: https://github.com/I7AKEM/visualization-agent/pull/1
   exact_old_head: 9e4efc857a1341fdf6453325492036339ba313ca
   conclusion: failed
@@ -108,9 +108,97 @@ immutable_failed_handoff:
       Dependency Review action v4.8.3 warned that its Node 20 action runtime was deprecated and
       forced to Node 24. The warning was not the job failure; any action upgrade requires a newly
       reviewed immutable SHA.
-external_repository_setting_blockers:
-  - Dependency Review remains unavailable until the repository owner enables Dependency Graph and the required GitHub Advanced Security capability.
-  - CodeQL result upload remains unavailable until the repository owner enables code scanning/GitHub Advanced Security and the workflow token integration can access the required code-scanning endpoints.
+immutable_failed_handoff_pr_2:
+  pull_request: https://github.com/I7AKEM/visualization-agent/pull/2
+  exact_head: 3db99620f038761cd9f32ba9f206963d87fcc277
+  exact_base: 804122a0b9602205ec368e96b8172736b09bb1c7
+  conclusion: failed
+  acceptance_effect: >-
+    Quality, reproducibility, and CodeQL produced exact-head successes, but dependency review
+    failed and the security run's Trivy license evidence was partial. The PR #2 run set is
+    immutable failure evidence, not green evidence for this correction.
+  runs:
+    - gate: quality
+      run_id: 33297848869
+      run_url: https://github.com/I7AKEM/visualization-agent/actions/runs/33297848869
+      conclusion: success
+      exact_sha: 3db99620f038761cd9f32ba9f206963d87fcc277
+      jobs: 5 passed, 0 failed
+      acceptance_credit: historical exact-head success only; it does not transfer to a corrected SHA
+    - gate: security
+      run_id: 33297848808
+      run_url: https://github.com/I7AKEM/visualization-agent/actions/runs/33297848808
+      github_conclusion: success
+      acceptance_valid: false
+      exact_sha: 3db99620f038761cd9f32ba9f206963d87fcc277
+      passed_jobs:
+        - Repository and history secret patterns
+        - Python SAST and dependency audit
+        - Node production dependency audit
+        - Trivy vulnerability, secret, license, and misconfiguration scan
+        - CodeQL Python and JavaScript/TypeScript
+        - Record exact hosted security run context
+      trivy_partial_evidence:
+        artifact_id: 9727972868
+        artifact_name: wp-01-trivy-33297848808-1-3db99620f038761cd9f32ba9f206963d87fcc277
+        artifact_digest: sha256:5ff0525935cccd3f006f81942232a5541ff2a657e00b0ee2a4402ac419479dcd
+        json_sha256: afd658c0d994e2c28312ff0d00b943142128e8368d1727ca616ca381ef22cf9
+        result_count: 2
+        pnpm_package_count: 284
+        uv_package_count: 1
+        license_record_count: 0
+        exact_warning: >-
+          [pnpm] Run "pnpm install" to collect the license information of packages
+          dir="node_modules"
+        invalidity: >-
+          The Trivy job had no installed Node or Python dependency environment. Trivy exited zero,
+          but the uploaded JSON contained zero license records and only partial package coverage,
+          so the security run cannot satisfy WP-01 acceptance.
+      hosted_manifest_artifact:
+        artifact_id: 9727985137
+        digest: sha256:680c96ca50503b2d48e384d53ce8d774474048d375934f61dea283089afc6597
+    - gate: dependency-review
+      run_id: 33297848886
+      run_url: https://github.com/I7AKEM/visualization-agent/actions/runs/33297848886
+      conclusion: failure
+      exact_sha: 3db99620f038761cd9f32ba9f206963d87fcc277
+      failed_job: Added dependency vulnerabilities and licenses
+      exact_failure: >-
+        pnpm-lock.yaml resolved undici@7.28.0, affected by GHSA-4cwx-7wf7-3272 /
+        CVE-2026-13697. The affected range is >=7.0.0,<7.29.0 and the first patched 7.x
+        release is 7.29.0.
+      summary_artifact:
+        artifact_id: 9727973480
+        digest: sha256:fa1dad86dc6ec1693f7ef336bd26a0c8895f4ed396bfa0862320aa1fb1bdf110
+        vulnerable_packages: 1
+        incompatible_licenses: 0
+        invalid_spdx: 0
+        unknown_licenses: 0
+    - gate: reproducibility
+      run_id: 33297848829
+      run_url: https://github.com/I7AKEM/visualization-agent/actions/runs/33297848829
+      conclusion: success
+      exact_sha: 3db99620f038761cd9f32ba9f206963d87fcc277
+      artifact_id: 9727992100
+      artifact_digest: sha256:541a64d5194cda4c5ad792ff2d09cf0d6ce694337990dfc9e5d069dfed165ea7
+      acceptance_credit: historical exact-head success only; it does not transfer to a corrected SHA
+  codeql_analysis:
+    database_id: 1693478673
+    ref: refs/pull/2/head
+    exact_sha: 3db99620f038761cd9f32ba9f206963d87fcc277
+    analysis_key: .github/workflows/security.yml:codeql
+    category: /language:foundation
+    result_count: 0
+    rule_count: 130
+    tool: CodeQL 2.26.4
+    error: ""
+    acceptance_credit: historical exact-head success only; a corrected SHA requires a new analysis
+historical_repository_setting_observation:
+  pr_1: Dependency Review and CodeQL publication were unavailable on PR #1.
+  pr_2: >-
+    Both capabilities executed on PR #2. Dependency Review failed on a real advisory and CodeQL
+    published an exact-head zero-result analysis, so the PR #1 setting claims are no longer current
+    blockers.
 workflow_correction:
   package_manager_execution: >-
     Every hosted entry point and every nested root workspace script now invokes pnpm as
@@ -119,23 +207,38 @@ workflow_correction:
     requires a globally installed bare pnpm executable.
   codeql_job_permissions: >-
     The correction grants only `actions: read` in addition to the existing `contents: read` and
-    `security-events: write`, so CodeQL can read its workflow-run context after the owner enables
-    code scanning. It does not enable or bypass GitHub Advanced Security.
+    `security-events: write`, so CodeQL can read its workflow-run context. PR #2 confirms that the
+    exact-head analysis published successfully; this workflow does not itself enable or bypass
+    GitHub Advanced Security.
+  dependency_advisory: >-
+    The root manifest now carries only the two reviewed parent-scoped pnpm overrides needed to
+    resolve the @cyclonedx/cdxgen 12.8.4 and cheerio 1.2.0 undici edges at patched 7.29.0. Static
+    lock policy rejects any undici 7.x below 7.29.0 or 8.x below 8.9.0, and the hosted Node job
+    audits the complete lock including development toolchains.
+  trivy_license_completeness: >-
+    The Trivy job now installs both exact frozen dependency environments before scanning. Its
+    HIGH/CRITICAL vulnerability, secret, and misconfiguration policy scan is separate from an
+    all-severity rootfs license-evidence scan; the latter retains every LGPL/unknown record and a
+    fail-closed validator rejects zero or partial Node/Python coverage and the committed
+    AGPL/GPL/SSPL deny policy before upload.
 local_state:
-  correction_verification: passed
-  no_global_pnpm_shim_path: /private/tmp/wp01-hosted-correction-bin
-  focused_execution_policy_tests: 9 passed
-  complete_ci_policy_tests: 41 passed
+  correction_verification: passed_precommit_exact_delivery_retest_pending
+  no_global_pnpm_shim: true
+  package_manager_path_proof: >-
+    The reproducibility PATH contained the pinned Node/Corepack and uv toolchains plus system
+    binaries, but no standalone pnpm executable; all nested pnpm calls still passed.
+  focused_dependency_and_trivy_tests: 11 passed
+  complete_ci_policy_tests: 52 passed
   double_clean_build: >-
     Two distinct clean frozen-lock workspaces produced 1,359 byte-identical generated files
-    and sha256:1c1954ef469df03b098ea37b30265e77d6bfc5436f7d4fe2c0ce9d0bcfa43361.
+    and sha256:32ab0d78c38ddf6fde14e631752a5335f6643da50c602d12f866135d50f8862d.
   standalone_runtime: >-
     The generated server returned HTTP 200 for the page and referenced client asset, exited 130
     after SIGINT, and left no listener.
   push_performed: false
   workflow_dispatch_performed: false
   reason: >-
-    This correction task only inspected the immutable old hosted runs. It did not push, update the
+    This correction task inspected immutable PR #1 and PR #2 evidence. It did not push, update a
     pull request, dispatch workflows, or change repository settings; those actions remain excluded.
 repository_local_package_manager:
   version_source: package.json packageManager pnpm@10.34.5

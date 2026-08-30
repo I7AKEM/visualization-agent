@@ -22,6 +22,14 @@ compatibility_claims:
   - id: next-production-build
     status: passed
     gate: corepack pnpm run build
+  - id: cdxgen-undici-advisory-remediation
+    status: passed
+    basis:
+      - The locked @cyclonedx/cdxgen 12.8.4 edge resolves undici 7.29.0.
+      - The locked cheerio 1.2.0 edge resolves undici 7.29.0 within its declared ^7.19.0 range.
+      - Every resolved undici 7.x is at least 7.29.0 and every 8.x is at least 8.9.0.
+      - Node 24.20.0 satisfies undici 7.29.0 node >=20.18.1.
+    gate: .venv/bin/python scripts/ci/verify_lockfiles.py
   - id: typescript-source-gate
     status: passed
     gate: corepack pnpm run typecheck
@@ -99,9 +107,19 @@ executed_post_install:
     result: passed
     summary: Next.js 16.3.3 production build compiled, typechecked, collected data, and generated 3 of 3 static pages; empty package build gates also passed.
 security_and_sbom_results:
-  - command: corepack pnpm audit --prod --audit-level high
+  - command: corepack pnpm audit --audit-level high
+    result: not_completed_locally
+    summary: >-
+      The sandboxed npm audit POST failed DNS resolution and escalation was rejected because the
+      request exports dependency metadata. The hosted exact-head complete-lock audit remains
+      mandatory; no green audit result is claimed for the corrected lock.
+  - command: .venv/bin/python scripts/ci/verify_lockfiles.py
     result: passed
-    summary: No known vulnerabilities found.
+    summary: >-
+      The exact two parent-scoped overrides and both cdxgen/cheerio edges resolve undici 7.29.0;
+      the lock contains only undici 7.29.0 and 8.10.0 and rejects advisory-vulnerable ranges.
   - command: corepack pnpm sbom
     result: passed
-    summary: CycloneDX 1.6 SBOM generated with 884 exact components and normalized reproducibly.
+    summary: >-
+      CycloneDX 1.6 SBOM generated with 883 exact components, 697 generator license records,
+      only undici 7.29.0/8.10.0, and normalized sha256:b8ee306780f72efe9390483035eaec7c663879d36a05c691dfbe0d452b0cb80b.

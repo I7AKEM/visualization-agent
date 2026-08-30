@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 from jsonschema import Draft202012Validator
 
 CI_DIR = Path(__file__).resolve().parents[1]
@@ -19,6 +20,9 @@ import normalize_sbom  # noqa: E402
 import rebuild_foundation  # noqa: E402
 import scan_secrets  # noqa: E402
 import validate_evidence  # noqa: E402
+import validate_trivy  # noqa: E402
+import validate_workflows  # noqa: E402
+import verify_lockfiles  # noqa: E402
 import verify_runtime_evidence  # noqa: E402
 
 
@@ -457,3 +461,131 @@ def test_extra_handoff_field_is_rejected() -> None:
     document["surprise"] = True
     errors = list(Draft202012Validator(schema("handoff-v1.schema.json")).iter_errors(document))
     assert errors
+
+
+def valid_trivy_license_report() -> dict[str, object]:
+    def row(package: str, file_path: str, license_name: str = "MIT") -> dict[str, object]:
+        return {
+            "Severity": "LOW",
+            "Category": "notice",
+            "PkgName": package,
+            "FilePath": file_path,
+            "Name": license_name,
+            "Text": "",
+            "Confidence": 1,
+            "Link": "",
+        }
+
+    return {
+        "SchemaVersion": 2,
+        "ArtifactName": ".",
+        "ArtifactType": "filesystem",
+        "Results": [
+            {
+                "Target": "Node.js",
+                "Class": "license",
+                "Licenses": [
+                    row(
+                        "@cyclonedx/cdxgen",
+                        "node_modules/.pnpm/cdxgen/node_modules/@cyclonedx/cdxgen/package.json",
+                        "Apache-2.0",
+                    ),
+                    row("next", "node_modules/.pnpm/next/node_modules/next/package.json"),
+                    row("react", "node_modules/.pnpm/react/node_modules/react/package.json"),
+                ],
+            },
+            {
+                "Target": "Python",
+                "Class": "license",
+                "Licenses": [
+                    row(
+                        "cyclonedx-bom",
+                        ".venv/lib/python3.12/site-packages/cyclonedx_bom.dist-info/METADATA",
+                        "Apache-2.0",
+                    ),
+                    row(
+                        "fastapi",
+                        ".venv/lib/python3.12/site-packages/fastapi.dist-info/METADATA",
+                    ),
+                    row(
+                        "pydantic-ai-slim",
+                        ".venv/lib/python3.12/site-packages/pydantic_ai_slim.dist-info/METADATA",
+                    ),
+                ],
+            },
+        ],
+    }
+
+
+def test_trivy_license_evidence_requires_both_installed_ecosystems() -> None:
+    assert validate_trivy.validate(valid_trivy_license_report()) == (6, 3, 3)
+
+
+def test_trivy_license_evidence_rejects_zero_rows() -> None:
+    report = valid_trivy_license_report()
+    for result in report["Results"]:  # type: ignore[union-attr]
+        result["Licenses"] = []
+    with pytest.raises(validate_trivy.TrivyValidationError, match="zero license"):
+        validate_trivy.validate(report)
+
+
+def test_trivy_license_evidence_rejects_missing_python_coverage() -> None:
+    report = valid_trivy_license_report()
+    report["Results"] = report["Results"][:1]  # type: ignore[index]
+    with pytest.raises(validate_trivy.TrivyValidationError, match=r"Python.*partial"):
+        validate_trivy.validate(report)
+
+
+def test_trivy_license_evidence_rejects_missing_node_coverage() -> None:
+    report = valid_trivy_license_report()
+    report["Results"] = report["Results"][1:]  # type: ignore[index]
+    with pytest.raises(validate_trivy.TrivyValidationError, match=r"Node.*partial"):
+        validate_trivy.validate(report)
+
+
+def test_trivy_license_evidence_rejects_malformed_row() -> None:
+    report = valid_trivy_license_report()
+    report["Results"][0]["Licenses"][0]["FilePath"] = ""  # type: ignore[index]
+    with pytest.raises(validate_trivy.TrivyValidationError, match="non-empty FilePath"):
+        validate_trivy.validate(report)
+
+
+def test_trivy_license_evidence_rejects_denied_license() -> None:
+    report = valid_trivy_license_report()
+    report["Results"][0]["Licenses"][0]["Name"] = "GPL-3.0-only"  # type: ignore[index]
+    with pytest.raises(validate_trivy.TrivyValidationError, match="denied licenses"):
+        validate_trivy.validate(report)
+
+
+def test_trivy_license_evidence_retains_reviewable_lgpl_without_suppressing_it() -> None:
+    report = valid_trivy_license_report()
+    report["Results"][0]["Licenses"][0].update(  # type: ignore[index,union-attr]
+        {"Name": "LGPL-3.0-or-later", "Severity": "HIGH"}
+    )
+    assert validate_trivy.validate(report) == (6, 3, 3)
+
+
+def test_undici_lock_policy_accepts_only_patched_resolutions() -> None:
+    manifest = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    lock = yaml.safe_load((ROOT / "pnpm-lock.yaml").read_text(encoding="utf-8"))
+    assert verify_lockfiles.validate_undici_security(manifest, lock) == ("7.29.0", "8.10.0")
+
+
+def test_undici_lock_policy_rejects_vulnerable_resolution() -> None:
+    manifest = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    lock = yaml.safe_load((ROOT / "pnpm-lock.yaml").read_text(encoding="utf-8"))
+    lock["packages"]["undici@7.28.0"] = {}
+    with pytest.raises(ValueError, match=r"advisory-vulnerable undici@7[.]28[.]0"):
+        verify_lockfiles.validate_undici_security(manifest, lock)
+
+
+def test_undici_lock_policy_rejects_override_drift() -> None:
+    manifest = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    lock = yaml.safe_load((ROOT / "pnpm-lock.yaml").read_text(encoding="utf-8"))
+    del manifest["pnpm"]["overrides"]["cheerio@1.2.0>undici"]
+    with pytest.raises(ValueError, match="exactly the reviewed undici overrides"):
+        verify_lockfiles.validate_undici_security(manifest, lock)
+
+
+def test_trivy_workflow_install_scan_validate_upload_order_is_static_policy() -> None:
+    assert validate_workflows.main() == 0

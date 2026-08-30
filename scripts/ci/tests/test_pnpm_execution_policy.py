@@ -402,6 +402,7 @@ def test_hosted_graph_reaches_nested_workflow_and_lifecycle_calls() -> None:
     source_names = {path.relative_to(ROOT).as_posix() for path in sources}
 
     required_packages = {
+        ("package.json", "audit:lock"),
         ("package.json", "audit:prod"),
         ("package.json", "build"),
         ("package.json", "presbom"),

@@ -2,7 +2,7 @@ schema_version: 1
 record_type: wp_01_ci_security_foundation
 work_package: WP-01
 assignment_base_commit: 0aca58ba95d5afd725834496e98d165b5b210a15
-status: implemented_local_gates_passed_hosted_exact_commit_pending
+status: immutable_pr_2_failed_correction_local_gates_passed_hosted_exact_commit_pending
 production_approved: false
 requirements:
   - GOV-001
@@ -41,7 +41,10 @@ ci_gates:
       - bandit_sast
       - pip_audit
       - pnpm_production_audit
-      - checksum_verified_trivy_vulnerability_secret_license_and_misconfiguration_scan
+      - pnpm_complete_lock_audit_including_development_toolchains
+      - checksum_verified_trivy_vulnerability_secret_and_misconfiguration_scan
+      - complete_installed_node_and_python_trivy_license_evidence
+      - fail_closed_nonempty_ecosystem_license_assertions
       - codeql_python_javascript_typescript
   dependency_review:
     workflow: .github/workflows/dependency-review.yml
@@ -62,6 +65,10 @@ supply_chain_controls:
   action_reference_policy: reviewed 40-hex Git commit only
   runner_policy: ubuntu-24.04 only; floating latest labels rejected
   dependency_policy: exact declarations plus committed pnpm and uv locks
+  advisory_override_policy: >-
+    Only the reviewed @cyclonedx/cdxgen 12.8.4 and cheerio 1.2.0 parent edges override undici to
+    patched 7.29.0. Static policy rejects override drift and any resolved 7.x below 7.29.0 or 8.x
+    below 8.9.0; suppression and advisory ignores are forbidden.
   package_manager_policy: >-
     pnpm 10.34.5 from package.json is invoked as corepack pnpm with COREPACK_HOME inside
     the checkout; corepack enable/global shim mutation and root npm/yarn locks are rejected
@@ -99,7 +106,7 @@ git_relationships_validated:
 local_results:
   - command: corepack pnpm install --frozen-lockfile
     exit_code: 0
-    result: 790 locked packages installed through pnpm 10.34.5 into the repository-local ignored store; unrs-resolver build script remained blocked.
+    result: 789 locked packages installed through pnpm 10.34.5 into the repository-local ignored store; unrs-resolver build script remained blocked.
   - command: uv sync --frozen --all-packages --group dev
     exit_code: 0
     result: Checked 161 locked packages for five Python workspace members with uv 0.12.7 and Python 3.12.14.
@@ -112,9 +119,9 @@ local_results:
   - command: .venv/bin/pytest -q
     exit_code: 0
     result: >-
-      All 46 tests passed: the Python compatibility/unit foundations plus 41 CI policy/security
-      cases, including nine focused Corepack execution-policy positive, negative, and nested-path
-      regressions. The exact final count is repeated in the handoff after delivery.
+      All 57 tests passed: the Python compatibility/unit foundations plus 52 CI policy/security
+      cases, including fail-closed Trivy completeness and undici advisory regressions. The exact
+      final count is repeated in the handoff after delivery.
   - command: .venv/bin/ruff format --check . && .venv/bin/ruff check . && .venv/bin/mypy services packages
     exit_code: 0
     result: Formatting and lint passed; strict mypy found no issues in five Python source files.
@@ -126,13 +133,19 @@ local_results:
     result: >-
       All five Python workspace packages produced both source distributions and wheels under
       SOURCE_DATE_EPOCH=315532800; the exact filenames are recorded in the corrected handoff.
-  - command: scripts/ci/audit_python_lock.sh and corepack pnpm audit --prod --audit-level high
+  - command: corepack pnpm audit --audit-level high
+    exit_code: 1
+    result: >-
+      The sandboxed npm audit POST failed DNS resolution. Escalation was rejected because the POST
+      exports dependency metadata, so no local green audit is claimed; the corrected hosted
+      complete-lock audit remains mandatory.
+  - command: scripts/ci/audit_python_lock.sh
     exit_code: 0
-    result: Both exact third-party locks reported no known vulnerabilities on the recorded advisory databases.
+    result: The exact Python lock reported no known vulnerabilities.
   - command: scripts/ci/validate_sbom.py and scripts/ci/validate_licenses.py
     exit_code: 0
     result: >-
-      CycloneDX Node 884/Python 161 component SBOMs passed structure, exact-version,
+      CycloneDX Node 883/Python 161 component SBOMs passed structure, exact-version,
       checkout-path normalization, checksum, direct/tool-license, and provisional deny-list
       gates. The 182 missing transitive/platform license fields remain blocked on hosted review.
   - command: scripts/ci/validate_evidence.py && scripts/ci/validate_workflows.py && scripts/ci/verify_lockfiles.py
@@ -141,23 +154,57 @@ local_results:
   - command: scripts/ci/scan_secrets.py --history
     exit_code: 0
     result: PASS current tracked/untracked text plus Git patch history; findings never echo values.
-  - command: scripts/ci/reproducible_foundation.sh /private/tmp/wp01-hosted-correction-repro-network-precommit
+  - command: scripts/ci/reproducible_foundation.sh /private/tmp/wp01-security-correction-repro-precommit
     exit_code: 0
     result: >-
       Corrected preflight used a PATH containing node, Corepack, and uv but no pnpm executable,
       two distinct clean frozen-lock workspaces, deterministic Next build entropy/ID, and
       checkout-prefix normalization. It compared 1,359 complete generated files and
-      byte-identical archives at sha256:1c1954ef469df03b098ea37b30265e77d6bfc5436f7d4fe2c0ce9d0bcfa43361.
+      byte-identical archives at sha256:32ab0d78c38ddf6fde14e631752a5335f6643da50c602d12f866135d50f8862d.
   - command: >-
       python3 scripts/ci/install_ci_tool.py trivy --output-dir /private/tmp/wp01-ci-tools
       --archive /private/tmp/trivy_0.73.0_Linux-64bit.tar.gz
     exit_code: 0
     result: PASS immutable Trivy v0.73.0 Linux asset verified and extracted from sha256:2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b.
+  - command: >-
+      trivy rootfs --scanners license --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL ... .;
+      .venv/bin/python scripts/ci/validate_trivy.py
+      /private/tmp/wp01-security-correction-trivy/trivy-licenses.json
+    exit_code: 0
+    result: >-
+      Checksum-reviewed Trivy v0.73.0 macOS ARM64 produced 1,342 unsuppressed license rows.
+      Fail-closed validation found 1,094 Node package names, 156 Python package names, every
+      required cdxgen/Next/React/CycloneDX/FastAPI/Pydantic sentinel, and no denied
+      AGPL/GPL/SSPL license. The raw JSON was
+      sha256:3741ed0058a8febe29ec948f83557322483a6f799a859bb2dce6165468c2cb23.
+  - command: >-
+      trivy filesystem --scanners vuln,misconfig,secret --include-dev-deps
+      --severity HIGH,CRITICAL --exit-code 1 ... .
+    exit_code: 0
+    result: >-
+      Trivy v0.73.0 found zero HIGH/CRITICAL findings across 883 pnpm lock packages and 168 uv
+      lock packages; the package list contained only undici 7.29.0 and 8.10.0. The raw JSON was
+      sha256:8d3b9e9d3446ea9e62de1a30f055919645f8cd2bbb2fcde57ce277a6f123b823.
+immutable_pr_2_results:
+  pull_request: https://github.com/I7AKEM/visualization-agent/pull/2
+  exact_head: 3db99620f038761cd9f32ba9f206963d87fcc277
+  exact_base: 804122a0b9602205ec368e96b8172736b09bb1c7
+  quality_run_33297848869: success
+  security_run_33297848808: >-
+    GitHub success but acceptance-invalid: the Trivy JSON had two results, pnpm 284 packages,
+    uv one root, and zero license rows because neither frozen dependency environment was installed.
+  dependency_review_run_33297848886: >-
+    Failure on undici@7.28.0, GHSA-4cwx-7wf7-3272 / CVE-2026-13697.
+  reproducibility_run_33297848829: success
+  codeql_analysis_1693478673: >-
+    Exact PR head, category /language:foundation, zero results. These immutable successes do not
+    transfer to the corrected handoff SHA.
 tests_not_run:
   - >-
-    Green hosted quality, GitHub dependency review/license evaluation, CodeQL upload, and Linux
-    Trivy runs for the exact corrected handoff commit require an external push/PR/dispatch. Those
-    actions remain excluded, so WP-01 acceptance and use as dependency evidence are blocked.
+    Green hosted quality, GitHub dependency review/license evaluation, CodeQL upload, complete
+    Linux Trivy evidence, and reproducibility runs for the exact corrected handoff commit require
+    an external push/PR/dispatch. Those actions remain excluded, so WP-01 acceptance and use as
+    dependency evidence are blocked.
   - A clean-room cross-host/container rebuild, signed provenance/attestation, and image scan are WP-14 release gates and are not claimed.
   - No production container image exists in WP-01, so Trivy scans the repository filesystem and misconfiguration sources; promoted-image scanning remains a later gate.
 disabled_features:
@@ -182,7 +229,8 @@ known_risks:
   - setup-uv is commit-pinned and requests exact uv 0.12.7, but the workflow does not maintain a second repository copy of setup-uv's upstream binary checksum verification metadata.
   - >-
     Local passes do not waive the mandatory exact-handoff hosted CI gate. No run URL/ID,
-    conclusion, CodeQL upload, Dependency Review license result, or Linux Trivy artifact is claimed.
+    conclusion, Dependency Review pass, corrected CodeQL analysis, or complete Linux Trivy artifact
+    is claimed. PR #2 identities and partial/failing evidence are recorded separately as historical.
 rollback_steps:
   - Remove the four WP-01 workflow files to stop CI execution without changing runtime code.
   - Remove scripts/ci, the two schemas, infra/dev, SECURITY.md, REPRODUCIBILITY.md, and this evidence fragment to withdraw the foundation policy.

@@ -24,6 +24,7 @@ FORBIDDEN = {
     "npm install -g": "global mutable Node installation",
     "corepack enable": "Corepack shim mutation outside the repository-local cache",
     "pip install --upgrade": "mutable Python bootstrap",
+    "--ignored-licenses": "suppressed Trivy license evidence",
     "OPENAI_API_KEY": "external model credential reference",
     "ANTHROPIC_API_KEY": "external model credential reference",
     "GOOGLE_API_KEY": "external model credential reference",
@@ -110,6 +111,53 @@ def main() -> int:
                 errors.append(
                     f"{relative}: hosted evidence lacks exact checked-out SHA markers: {missing}"
                 )
+        if path.name == "security.yml":
+            trivy_job_start = text.find("  trivy-filesystem:")
+            trivy_job_end = text.find("  codeql:", trivy_job_start)
+            trivy_text = (
+                text[trivy_job_start:trivy_job_end]
+                if trivy_job_start >= 0 and trivy_job_end > trivy_job_start
+                else ""
+            )
+            trivy_markers = (
+                "corepack pnpm install --frozen-lockfile",
+                "uv sync --frozen --all-groups --all-packages",
+                "/trivy filesystem",
+                "--scanners vuln,misconfig,secret",
+                "--include-dev-deps",
+                "/trivy rootfs",
+                "--scanners license",
+                "--severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+                "scripts/ci/validate_trivy.py",
+                "path: artifacts/security/",
+            )
+            missing = [marker for marker in trivy_markers if marker not in trivy_text]
+            if missing:
+                errors.append(
+                    f"{relative}: incomplete Trivy environment/evidence markers: {missing}"
+                )
+            else:
+                node_install = trivy_text.index("corepack pnpm install --frozen-lockfile")
+                python_install = trivy_text.index("uv sync --frozen --all-groups --all-packages")
+                policy_scan = trivy_text.index("/trivy filesystem")
+                license_scan = trivy_text.index("/trivy rootfs")
+                validation = trivy_text.index("scripts/ci/validate_trivy.py")
+                upload = trivy_text.index("- name: Upload Trivy evidence")
+                if not (
+                    node_install < policy_scan
+                    and python_install < policy_scan
+                    and policy_scan < license_scan < validation < upload
+                ):
+                    errors.append(
+                        f"{relative}: frozen installs, Trivy scans, validation, and upload "
+                        "must remain fail-closed and ordered"
+                    )
+            for forbidden_skip in ("--skip-dirs node_modules", "--skip-dirs .venv"):
+                if forbidden_skip in trivy_text:
+                    errors.append(
+                        f"{relative}: Trivy must scan installed dependencies; "
+                        f"forbidden {forbidden_skip!r}"
+                    )
 
     unused = sorted(set(pinned_actions) - seen_actions)
     if unused:

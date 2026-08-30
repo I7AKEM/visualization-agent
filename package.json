@@ -14,6 +14,7 @@
     "packages/*"
   ],
   "scripts": {
+    "audit:lock": "corepack pnpm audit --audit-level high",
     "audit:prod": "corepack pnpm audit --prod --audit-level high",
     "build": "corepack pnpm -r --if-present build",
     "check:peers": "node scripts/check-peer-compatibility.mjs",
@@ -44,5 +45,11 @@
     "typescript": "6.0.3",
     "vitest": "4.1.8",
     "zod": "4.1.8"
+  },
+  "pnpm": {
+    "overrides": {
+      "@cyclonedx/cdxgen@12.8.4>undici": "7.29.0",
+      "cheerio@1.2.0>undici": "7.29.0"
+    }
   }
 }

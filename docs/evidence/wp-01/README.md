@@ -15,9 +15,10 @@
   client-asset HTTP probes, clean shutdown, and import-only Python boundaries.
 - `runtime/` commits the exact page and asset responses, startup/shutdown log,
   machine-readable trace, original failure/retest record, and checksum manifest.
-- `hosted-ci.yaml` preserves the four immutable failed old-handoff run IDs, exact
-  causes, partial artifacts, owner-setting blockers, and the exact-SHA rerun rule
-  without relabeling any failed run or local result as green hosted evidence.
+- `hosted-ci.yaml` preserves PR #1 and PR #2 as immutable failed-handoff evidence.
+  It records PR #2's exact-head quality/reproducibility/CodeQL successes, dependency
+  advisory failure, acceptance-invalid zero-license Trivy artifact, and the corrected
+  exact-SHA rerun rule without relabeling any historical or local result as acceptance green.
 - `ownership-scope.yaml` reconciles primary WP-01 paths, explicitly authorized
   empty scaffolds, test/schema/CI policy paths, and the four excluded integration paths.
 - `fixtures/legacy-poc/` preserves the original POC dependency manifest while
