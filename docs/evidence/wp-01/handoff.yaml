@@ -1,135 +1,19 @@
 schema_version: 1
 work_package: WP-01
-base_integration_commit: 0aca58ba95d5afd725834496e98d165b5b210a15
-delivery_commit: 57bbe7f9ad004ecbbbdc9f96351ebf0ddee526af
+base_integration_commit: 9e4efc857a1341fdf6453325492036339ba313ca
+delivery_commit: 5a55501561ec9aab851358f11191a00fae748cf6
 handoff_commit: null
 handoff_state: submitted
 changed_paths:
-  - .gitattributes
-  - .github/codeql-config.yml
-  - .github/dependabot.yml
-  - .github/dependency-review-config.yml
-  - .github/workflows/dependency-review.yml
-  - .github/workflows/quality.yml
-  - .github/workflows/reproducibility.yml
   - .github/workflows/security.yml
-  - .gitignore
-  - .node-version
-  - .npmrc
-  - .nvmrc
-  - .python-version
-  - REPRODUCIBILITY.md
-  - SECURITY.md
-  - apps/web/app/layout.tsx
-  - apps/web/app/page.tsx
-  - apps/web/eslint.config.mjs
-  - apps/web/next-env.d.ts
-  - apps/web/next.config.ts
-  - apps/web/package.json
-  - apps/web/scripts/prepare-standalone.mjs
-  - apps/web/src/compatibility/hydration.test.tsx
-  - apps/web/src/compatibility/stream-golden.test.ts
-  - apps/web/src/compatibility/ui-probe.tsx
-  - apps/web/tsconfig.json
-  - apps/web/vitest.config.ts
-  - datasets/eval/README.md
-  - datasets/fixtures/README.md
   - docs/evidence/wp-01/README.md
   - docs/evidence/wp-01/ci-security-foundation.yaml
-  - docs/evidence/wp-01/fixtures/legacy-poc/README.md
-  - docs/evidence/wp-01/fixtures/legacy-poc/package.json
   - docs/evidence/wp-01/hosted-ci.yaml
   - docs/evidence/wp-01/node-compatibility.yaml
-  - docs/evidence/wp-01/node-dependencies.yaml
-  - docs/evidence/wp-01/ownership-scope.yaml
   - docs/evidence/wp-01/python-compatibility.yaml
-  - docs/evidence/wp-01/python-dependencies.yaml
-  - docs/evidence/wp-01/runtime-smoke.yaml
-  - docs/evidence/wp-01/runtime/asset-headers.txt
-  - docs/evidence/wp-01/runtime/checksums.sha256
-  - docs/evidence/wp-01/runtime/client-asset.js
-  - docs/evidence/wp-01/runtime/failure-retest.yaml
-  - docs/evidence/wp-01/runtime/page-body.html
-  - docs/evidence/wp-01/runtime/page-headers.txt
-  - docs/evidence/wp-01/runtime/startup-shutdown.log
-  - docs/evidence/wp-01/runtime/trace.json
   - docs/evidence/wp-01/version-license-sbom-manifest.yaml
-  - docs/runbooks/README.md
-  - infra/alerts/README.md
-  - infra/containers/README.md
-  - infra/dashboards/README.md
-  - infra/dev/README.md
-  - infra/dev/ci-tools.lock.json
-  - infra/dev/compose.yaml
-  - infra/migrations/README.md
-  - infra/otel/README.md
   - package.json
-  - packages/contracts_py/README.md
-  - packages/contracts_py/pyproject.toml
-  - packages/contracts_py/src/visualization_agent_contracts/__init__.py
-  - packages/contracts_ts/README.md
-  - packages/contracts_ts/package.json
-  - packages/contracts_ts/src/index.ts
-  - packages/contracts_ts/tsconfig.json
-  - packages/evals/README.md
-  - packages/evals/pyproject.toml
-  - packages/evals/src/visualization_agent_evals/__init__.py
-  - packages/renderer_registry/README.md
-  - packages/renderer_registry/package.json
-  - packages/renderer_registry/src/index.ts
-  - packages/renderer_registry/tsconfig.json
-  - pnpm-lock.yaml
-  - pnpm-workspace.yaml
-  - pyproject.toml
-  - schemas/handoff-v1.schema.json
-  - schemas/integration-acceptance-v1.schema.json
-  - scripts/check-peer-compatibility.mjs
-  - scripts/check-runtime-pins.mjs
-  - scripts/ci/assert_model_block.py
-  - scripts/ci/audit_python_lock.sh
-  - scripts/ci/build_foundation_artifact.py
-  - scripts/ci/capture_runtime_evidence.py
-  - scripts/ci/install_ci_tool.py
-  - scripts/ci/model_block/sitecustomize.py
-  - scripts/ci/normalize_sbom.py
-  - scripts/ci/rebuild_foundation.py
-  - scripts/ci/reproducible_foundation.sh
-  - scripts/ci/scan_secrets.py
-  - scripts/ci/tests/test_ci_policy.py
-  - scripts/ci/validate_evidence.py
-  - scripts/ci/validate_licenses.py
-  - scripts/ci/validate_sbom.py
-  - scripts/ci/validate_workflows.py
-  - scripts/ci/verify_lockfiles.py
-  - scripts/ci/verify_runtime_evidence.py
-  - scripts/ci/write_hosted_run_manifest.py
-  - scripts/generate-node-sbom.mjs
-  - scripts/prepare-sbom.mjs
-  - services/api/README.md
-  - services/api/pyproject.toml
-  - services/api/src/visualization_agent_api/__init__.py
-  - services/worker_analysis/README.md
-  - services/worker_analysis/pyproject.toml
-  - services/worker_analysis/src/visualization_agent_worker_analysis/__init__.py
-  - services/worker_export/README.md
-  - services/worker_export/pyproject.toml
-  - services/worker_export/src/visualization_agent_worker_export/__init__.py
-  - tests/chaos/README.md
-  - tests/compatibility/fixtures/README.md
-  - tests/compatibility/fixtures/ai-sdk-7-reference.sse
-  - tests/compatibility/fixtures/pydantic-ai-2.36.0-hitl.sse
-  - tests/compatibility/fixtures/pydantic-ai-2.36.0-text-custom.sse
-  - tests/compatibility/node/foundation.test.mjs
-  - tests/compatibility/python/test_vercel_ai_adapter.py
-  - tests/conftest.py
-  - tests/contract/README.md
-  - tests/e2e/README.md
-  - tests/integration/README.md
-  - tests/performance/README.md
-  - tests/security/README.md
-  - tests/unit/test_python_foundation.py
-  - tsconfig.base.json
-  - uv.lock
+  - scripts/ci/tests/test_pnpm_execution_policy.py
 requirements:
   - GOV-001
   - GOV-002
@@ -140,39 +24,61 @@ dependency_commits:
   WP-00: 50a30911e9eb720b6ba8986cdf1d97f12e6a6640
 commands_run:
   - command: >-
-      PATH=/private/tmp/wp01-node.2MWnTu/node-v24.20.0-darwin-arm64/bin:/usr/bin:/bin
+      PATH=/private/tmp/wp01-hosted-correction-bin:/usr/bin:/bin
       COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack CI=true
-      npm_config_store_dir=<repository-local-content-store>
       corepack pnpm install --frozen-lockfile
     exit_code: 0
-    result: The exact pnpm 10.34.5 lock installed 790 packages for four workspace projects; no dependency was downloaded and the unrs-resolver build script remained blocked.
+    result: >-
+      The exact delivery verified the four-workspace pnpm 10.34.5 lock with a PATH that had
+      node and Corepack but no pnpm executable; 790 locked packages were already installed and
+      the unrs-resolver build script remained blocked.
   - command: >-
       UV_CACHE_DIR=/private/tmp/wp01-uv-cache /private/tmp/wp01-uv-0.12.7/uv
       sync --frozen --all-packages --group dev --python /opt/homebrew/bin/python3.12
     exit_code: 0
-    result: uv 0.12.7 installed all 161 locked packages for five Python workspace members on Python 3.12.14.
+    result: uv 0.12.7 checked all 161 locked packages for five Python workspace members on Python 3.12.14.
   - command: >-
-      NEXT_TELEMETRY_DISABLED=1 COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack
-      corepack pnpm verify
+      PATH=/private/tmp/wp01-hosted-correction-bin:/usr/bin:/bin
+      COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack
+      NEXT_TELEMETRY_DISABLED=1 corepack pnpm verify; corepack pnpm test:compat
     exit_code: 0
-    result: Exact runtime and peer pins, ESLint, strict TypeScript, four Node foundation tests, four web tests, empty TypeScript package builds, and the Next.js 16.3.3 production build passed.
+    result: >-
+      Runtime and peer pins, ESLint, strict TypeScript, four Node foundation tests, four web
+      unit/component tests, four adapter compatibility tests, all package builds, and the
+      Next.js 16.3.3 production build passed without a global pnpm shim.
+  - command: >-
+      .venv/bin/pytest -q scripts/ci/tests/test_pnpm_execution_policy.py;
+      .venv/bin/pytest -q
+    exit_code: 0
+    result: >-
+      All nine focused Corepack execution-policy tests and all 46 repository tests passed.
+      Positive and negative command forms, active manifests, workflow run blocks, child-process
+      calls, lifecycle hooks, and the nested audit/build/SBOM/reproducibility/runtime paths are covered.
   - command: >-
       .venv/bin/ruff format --check .; .venv/bin/ruff check .;
-      .venv/bin/mypy services packages; .venv/bin/pytest -q;
-      .venv/bin/bandit -q -r services packages
+      .venv/bin/mypy services packages; .venv/bin/bandit -q -r services packages
     exit_code: 0
-    result: Ruff checked 67 files, strict mypy found no issues in five source files, all 37 Python tests passed including 32 CI-policy negative cases, and Bandit reported no findings.
+    result: Ruff checked 68 files, strict mypy found no issues in five source files, and Bandit reported no findings.
   - command: >-
-      UV_CACHE_DIR=/private/tmp/wp01-uv-cache /private/tmp/wp01-uv-0.12.7/uv
-      build --all-packages
+      UV_CACHE_DIR=/private/tmp/wp01-uv-cache SOURCE_DATE_EPOCH=315532800
+      /private/tmp/wp01-uv-0.12.7/uv build --all-packages
+    exit_code: 2
+    result: >-
+      The first exact-delivery attempt passed format, lint, type, test, and SAST before the
+      sandbox blocked DNS for the pinned hatchling build backend. No package-build pass was claimed.
+  - command: >-
+      UV_CACHE_DIR=/private/tmp/wp01-uv-cache SOURCE_DATE_EPOCH=315532800
+      /private/tmp/wp01-uv-0.12.7/uv build --all-packages
     exit_code: 0
-    result: Each of API, contracts, evals, analysis worker, and export worker produced both a source distribution and a py3-none-any wheel.
-  - command: scripts/ci/audit_python_lock.sh
+    result: >-
+      The authorized network retest built source distributions and py3-none-any wheels for API,
+      contracts, evals, analysis worker, and export worker.
+  - command: >-
+      scripts/ci/audit_python_lock.sh;
+      PATH=/private/tmp/wp01-hosted-correction-bin:/usr/bin:/bin
+      COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack corepack pnpm audit:prod
     exit_code: 0
-    result: pip-audit reported no known vulnerabilities for the exact exported Python lock.
-  - command: NEXT_TELEMETRY_DISABLED=1 corepack pnpm audit:prod
-    exit_code: 0
-    result: The npm advisory service reported no known vulnerabilities in production Node dependencies.
+    result: Both exact locks reported no known vulnerabilities on the queried advisory databases.
   - command: >-
       corepack pnpm sbom; .venv/bin/cyclonedx-py environment --output-format JSON
       --output-file artifacts/sbom/python.cdx.json; .venv/bin/python
@@ -183,82 +89,82 @@ commands_run:
       artifacts/sbom/python.cdx.json
     exit_code: 0
     result: >-
-      Normalized checkout-independent CycloneDX SBOMs passed at Node
+      Normalized CycloneDX SBOMs passed at Node
       sha256:aff779e33d1f6d48cf94817ee59e9ea550f895c20cbbbe2af6a60574888539ae
       (884 components, 698 with generator license metadata) and Python
       sha256:0ff038cba0f5d005b1a481c39faf61bb6f6d33bdb79bddf8da9853b79513ebed
       (161 components, 154 with metadata). All 47 direct declarations and 48 reviewed exact
-      records passed; hosted Dependency Review remains required for 182 omitted fields.
+      records passed; 182 locally omitted transitive/platform fields remain subject to hosted review.
   - command: >-
       .venv/bin/python scripts/ci/validate_evidence.py; .venv/bin/python
       scripts/ci/validate_workflows.py; .venv/bin/python scripts/ci/verify_lockfiles.py;
       .venv/bin/python scripts/ci/verify_runtime_evidence.py;
+      PYTHONPATH=scripts/ci/model_block ALLOW_MODEL_REQUESTS=false
+      PYDANTIC_AI_ALLOW_MODEL_REQUESTS=false .venv/bin/python scripts/ci/assert_model_block.py;
       .venv/bin/python scripts/ci/scan_secrets.py --history
     exit_code: 0
-    result: Evidence and Git relationships, four workflows and seven immutable action pins, exact lock policy, committed runtime semantics/checksums, 172 repository text files, and Git patch history passed.
+    result: >-
+      Evidence and Git relationships, four workflows and seven immutable action pins, lock policy,
+      committed runtime checksums/semantics, real-model request blocking, 174 repository text files,
+      and Git patch history passed.
   - command: >-
-      ALLOW_MODEL_REQUESTS=false PYDANTIC_AI_ALLOW_MODEL_REQUESTS=false
-      PYTHONPATH=scripts/ci/model_block .venv/bin/python scripts/ci/assert_model_block.py
-    exit_code: 0
-    result: Pydantic AI real-model requests were disabled and provider credential names were absent.
-  - command: >-
-      SOURCE_DATE_EPOCH=315532800 scripts/ci/reproducible_foundation.sh
-      /private/tmp/wp01-57bbe7f-repro
-    exit_code: 1
-    result: The first sandboxed exact-delivery attempt could not resolve the locked hatchling build backend because network access was restricted; no build result was claimed.
-  - command: >-
-      SOURCE_DATE_EPOCH=315532800 scripts/ci/reproducible_foundation.sh
-      /private/tmp/wp01-57bbe7f-repro-retest
+      PATH=/private/tmp/wp01-hosted-correction-bin:/usr/bin:/bin
+      UV_CACHE_DIR=/private/tmp/wp01-uv-cache
+      COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack
+      SOURCE_DATE_EPOCH=315532800 NEXT_TELEMETRY_DISABLED=1
+      scripts/ci/reproducible_foundation.sh
+      /private/tmp/wp01-hosted-correction-repro-exact-delivery
     exit_code: 0
     result: >-
-      Two distinct clean frozen-lock builds each generated 1,359 files with identity
-      sha256:271f5ab21ae054877c4ac96457397030e3d9ecab75a4ba48b41d606f1d5d06b6
+      Two distinct clean frozen-lock builds, both without a pnpm executable on PATH, produced
+      1,359 generated files with identical generated manifest
+      sha256:691e71f83ce8708f4e96eb7d9ddca83dfcfc4e1cd18594eb1f7756ca47f7e039
       and byte-identical normalized archives
-      sha256:136cb179dd0acc22393bbf19e2a9f68a07c5e05136631f062f6a68070a8a84bf.
-      Input identity was 6ff805102e4bf788e7d27325f48968becb9c97a49e6b82e141a596df3e1c79c7,
-      Next build ID was wp01-6ff805102e4bf788e7d27325f48968becb9c97a49e6b82e141a596df3e1c79c7,
-      and SOURCE_DATE_EPOCH was 315532800.
+      sha256:3a84fc75fe72677d207ad0016278d014ec0566dd469921e80d542492814d8594.
+      Input identity and Next build ID were df448871dbf030bb526cd1d3b8d9088d187cf26baa28ed2b51aa793bad4cc8b8.
   - command: >-
-      NEXT_TELEMETRY_DISABLED=1 NEXT_BUILD_ID=wp01-runtime-correction-v2
+      NEXT_TELEMETRY_DISABLED=1
+      NEXT_BUILD_ID=wp01-hosted-5a55501561ec9aab851358f11191a00fae748cf6
       corepack pnpm --filter @visualization-agent/web build
     exit_code: 0
-    result: The exact delivery produced the Next.js 16.3.3 standalone production shell with telemetry disabled and deterministic runtime build identity.
+    result: The exact delivery produced the Next.js 16.3.3 generated standalone server and packaged client assets.
   - command: >-
-      NEXT_TELEMETRY_DISABLED=1 .venv/bin/python scripts/ci/capture_runtime_evidence.py
-      --output-dir /private/tmp/wp01-57bbe7f-runtime --host 127.0.0.1 --port 34101
-    exit_code: 1
-    result: The sandbox denied loopback bind with EPERM; the process exited 1 and left no listener, so the runtime gate was retested with the approved narrow loopback permission.
-  - command: >-
-      NEXT_TELEMETRY_DISABLED=1 .venv/bin/python scripts/ci/capture_runtime_evidence.py
-      --output-dir /private/tmp/wp01-57bbe7f-runtime-retest --host 127.0.0.1 --port 34101
+      .venv/bin/python scripts/ci/capture_runtime_evidence.py
+      --output-dir /private/tmp/wp01-hosted-correction-runtime-exact-delivery
+      --host 127.0.0.1 --port 34104;
+      .venv/bin/python scripts/ci/verify_runtime_evidence.py
+      /private/tmp/wp01-hosted-correction-runtime-exact-delivery
     exit_code: 0
     result: >-
-      The exact delivery returned HTTP 200 for the 4,673-byte page and 16,891-byte client
-      asset, reproduced the committed page, asset, and semantic trace hashes, received SIGINT,
-      exited 130 without forced kill, and left no listener on port 34101. Checkout path and
-      startup timing make process-log and response-header hashes observational rather than build proof.
+      The exact delivery returned HTTP 200 for the 4,699-byte page and 16,891-byte referenced
+      client asset, received SIGINT, exited 130 without forced kill, and left no listener.
+      The runtime semantic validator passed the complete checksummed file set.
   - command: >-
       .venv/bin/python -c 'import visualization_agent_api,
       visualization_agent_worker_analysis, visualization_agent_worker_export'
     exit_code: 0
-    result: All Python service package boundaries imported; WP-01 intentionally defines no ASGI app, worker loop, console script, port, or dependency connection.
+    result: All Python service package boundaries imported and left no process or listener.
   - command: >-
-      python3 scripts/ci/install_ci_tool.py trivy --output-dir /private/tmp/wp01-ci-tools
+      .venv/bin/python scripts/ci/install_ci_tool.py trivy
+      --output-dir /private/tmp/wp01-hosted-correction-trivy-exact-delivery
       --archive /private/tmp/trivy_0.73.0_Linux-64bit.tar.gz
     exit_code: 0
-    result: The immutable Trivy v0.73.0 Linux x64 archive was verified and extracted at sha256:2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b; execution remains a hosted Linux gate.
+    result: >-
+      The immutable Trivy v0.73.0 Linux archive was verified and extracted at
+      sha256:2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b;
+      execution of that Linux binary remains an exact-handoff hosted gate.
 tests_not_run:
   - >-
-    Green hosted quality, GitHub Dependency Review including full license evaluation,
-    CodeQL analysis/upload, Linux Trivy, and hosted reproducibility runs for the exact corrected
-    handoff commit were not run because external push, pull-request creation, and workflow
-    dispatch remain excluded. WP-01 acceptance and use as dependency evidence are blocked.
-  - No immutable hosted run URL, run ID, conclusion, artifact ID, or artifact checksum is claimed locally.
-  - A clean-room cross-host/container rebuild, signed provenance or attestation, and promoted-image scan are WP-14 release gates and are not claimed.
-  - No production image exists in WP-01; the applicable hosted Trivy scope is the repository filesystem and misconfiguration sources.
-  - A real local agent/API/stream path is not present because WP-03 owns API/state, WP-05 owns the first streaming UI, and WP-06 owns logical agents.
-  - Playwright and real product interaction begin with WP-05; WP-01 owns no upload, chat, render, revision, reconnect, Arabic/RTL, accessibility, or responsive product flow.
-  - External dependency-failure behavior is not applicable because WP-01 configures no database, cache, object store, API, queue, provider, or worker dependency.
+    No corrected-handoff hosted workflow was run because push, pull-request mutation, and workflow
+    dispatch were excluded. The immutable old-head runs remain failures: quality 33295329936 and
+    reproducibility 33295329884 failed on nested bare pnpm; security 33295329879 also failed its
+    Node audit on bare pnpm and its CodeQL upload on repository capability/access; dependency review
+    33295329899 failed because Dependency Graph and GitHub Advanced Security were unavailable.
+  - >-
+    No hosted quality/security/dependency-review/reproducibility URL, conclusion, corrected exact
+    SHA artifact, Linux Trivy execution result, CodeQL upload, or full-lock license decision is
+    claimed for delivery 5a55501561ec9aab851358f11191a00fae748cf6 or its handoff-only child.
+  - A clean-room cross-host/container rebuild, signed provenance or attestation, and promoted-image scan remain WP-14 release gates and are not claimed.
 eval_manifest_versions: []
 migrations: []
 configuration_keys:
@@ -273,8 +179,7 @@ configuration_keys:
   - PORT
 secret_names: []
 telemetry_changes:
-  - NEXT_TELEMETRY_DISABLED=1 is mandatory in hosted workflows and documented local build commands so WP-01 builds emit no unapproved Next.js telemetry.
-  - WP-01 adds no application telemetry pipeline, exporter, credential, or external destination.
+  - NEXT_TELEMETRY_DISABLED=1 remains mandatory for hosted and local builds; this correction adds no telemetry pipeline, credential, or destination.
 disabled_features:
   - DF-001
   - DF-002
@@ -291,19 +196,26 @@ disabled_features:
   - DF-013
 known_risks:
   - >-
-    Mandatory exact-handoff hosted CI is pending: no green quality run, Dependency Review
-    license evaluation, CodeQL upload, Linux Trivy result, hosted reproducibility artifact,
-    immutable run URL/ID, or hosted artifact checksum exists yet.
-  - SBOM generators omit license metadata for 182 transitive or platform components; local direct/tool review passes, but hosted Dependency Review is required before acceptance.
-  - Dependency advisory databases are mutable external inputs; local audits record the 2026-08-30 result and cannot establish permanent absence of future advisories.
-  - Runtime HTTP header and process-log hashes include observational timing/path data; only the full deterministic double-build generated tree and archive hashes support reproducibility.
-  - setup-uv is commit-pinned and requests uv 0.12.7, but the workflow relies on the pinned action's upstream binary verification rather than a second repository copy of that metadata.
-  - The deterministic secret scanner and engineering license deny-list complement but do not replace hosted secret scanning or final legal review.
+    Mandatory hosted CI is still pending for the exact handoff-only child. Local success cannot
+    replace the four required hosted conclusions, immutable run identities, and artifact checksums.
+  - >-
+    Dependency Review remains externally blocked until the repository owner enables Dependency
+    Graph and the required GitHub Advanced Security capability.
+  - >-
+    CodeQL upload remains externally blocked until the repository owner enables code scanning/GitHub
+    Advanced Security and the workflow token integration can access the code-scanning endpoints.
+    The delivery grants the CodeQL job only actions: read, contents: read, and security-events: write.
+  - >-
+    SBOM generators omit license metadata for 182 components on the recorded Darwin environment;
+    the failed old Linux run reported 183. Local direct/tool review passes, but hosted Dependency
+    Review is required before acceptance.
+  - Dependency advisory databases are mutable external inputs; the local 2026-08-30 result cannot establish permanent absence of future advisories.
+  - The local deterministic secret scanner and engineering license deny-list complement but do not replace repository-host scanning or final legal review.
 rollback_steps:
-  - Revert the handoff-only child, then revert delivery commit 57bbe7f9ad004ecbbbdc9f96351ebf0ddee526af; do not amend, reset, rebase, clean, or alter the preserved rejected commits.
-  - Keep the WP-01 assignment commit 0aca58ba95d5afd725834496e98d165b5b210a15 and the integration owner's 804122a0b9602205ec368e96b8172736b09bb1c7 on its integration branch.
-  - Preserve all POC, runtime, output, and user paths and keep every owner-dependent feature disabled throughout rollback.
+  - Revert the handoff-only child, then revert delivery commit 5a55501561ec9aab851358f11191a00fae748cf6; do not amend, reset, rebase, clean, or rewrite the immutable failed handoff.
+  - Preserve base 9e4efc857a1341fdf6453325492036339ba313ca, every POC/output/user path, and all disabled-feature states during rollback.
 critical_gates_passed:
+  - COREPACK-NO-GLOBAL-PNPM-HOSTED-EXECUTION-GRAPH
   - EXACT-VERSION-LOCKS
   - PYDANTIC-AI-2.36-AI-SDK-7-COMPATIBILITY
   - NODE-PEER-BUILD-HYDRATION-STREAM-HITL-CUSTOM-DATA
@@ -320,11 +232,10 @@ reviewers_required:
 local_runtime_evidence:
   status: passed
   rationale: >-
-    WP-01 owns one runnable behavior: the frozen-lock Next.js production foundation shell,
-    which passed start, page and client-asset readiness, SIGINT shutdown, and no-listener checks.
-    Python services are import-only empty boundaries with no ASGI or worker entry point. A real
-    offline agent/API/stream is owned by WP-03, WP-05, and WP-06; real UI is owned by WP-05;
-    later renderer, map/temporal, and export suites are owned by WP-08, WP-09, and WP-12.
+    WP-01 owns the frozen-lock Next.js foundation shell. The exact delivery passed production
+    build, page and referenced-client-asset readiness, graceful SIGINT, and no-listener checks.
+    Python services remain import-only boundaries; later API/stream/UI behavior belongs to WP-03,
+    WP-05, and WP-06.
   subgates:
     frozen_lock_start_health_shutdown: passed
     offline_agent_api_and_stream: not_applicable
@@ -332,29 +243,26 @@ local_runtime_evidence:
     later_package_suite_extension: not_applicable
   frozen_lock_start_commands:
     - >-
-      NEXT_TELEMETRY_DISABLED=1 NEXT_BUILD_ID=wp01-runtime-correction-v2
+      NEXT_TELEMETRY_DISABLED=1
+      NEXT_BUILD_ID=wp01-hosted-5a55501561ec9aab851358f11191a00fae748cf6
       corepack pnpm --filter @visualization-agent/web build
     - >-
       COREPACK_HOME=/private/tmp/wp01-node.2MWnTu/corepack HOSTNAME=127.0.0.1
-      PORT=34101 corepack pnpm --filter @visualization-agent/web start
+      PORT=34104 corepack pnpm --filter @visualization-agent/web start
     - >-
       .venv/bin/python -c 'import visualization_agent_api,
       visualization_agent_worker_analysis, visualization_agent_worker_export'
   health_readiness_checks:
-    - HTTP GET http://127.0.0.1:34101/ returned HTTP/1.1 200 OK, text/html, 4,673 bytes, and the expected Visualization Agent heading.
+    - HTTP GET http://127.0.0.1:34104/ returned HTTP/1.1 200 OK, 4,699 bytes, and the expected Visualization Agent heading.
     - HTTP GET of the generated client chunk returned HTTP/1.1 200 OK and 16,891 bytes with sha256:6b1d5556b9a152c3cda207b3c932c8b4018b0a83da91e911d32aba98a60c9502.
-    - The exact-delivery rerun reproduced the committed page, client asset, and semantic trace hashes; the page hash remains runtime-observation evidence, not reproducible-build proof.
-    - External dependency-failure behavior is not applicable because WP-01 owns no configured database, cache, object store, API, queue, provider, or worker dependency.
+    - The complete temporary evidence set passed checksum and semantic validation.
   graceful_shutdown_checks:
-    - SIGINT produced process exit 130 without forced kill, and TCP port 34101 had no remaining listener.
+    - SIGINT produced process exit 130 without forced kill, and TCP port 34104 had no remaining listener.
     - Python boundary imports completed with exit 0 and left no process or port.
   agent_api_stream_traces:
-    - >-
-      A real API/agent stream is not applicable: WP-03 owns API/state, WP-05 owns the first
-      real streaming UI, and WP-06 owns logical agents. Offline exact adapter fixtures remain
-      under tests/compatibility/fixtures and pass the Pydantic AI to AI SDK compatibility tests.
+    - Real API/agent streaming is not applicable to WP-01; exact offline adapter fixtures remain covered by the passing compatibility suite.
   ui_e2e_artifacts:
-    - Real-browser product E2E is not applicable before WP-05 because WP-01 owns no interactive product behavior; the owned production shell was exercised over loopback HTTP.
+    - Real-browser product E2E is not applicable before WP-05; WP-01's owned shell was exercised over loopback HTTP.
   dataset_result_artifact_hashes:
     - docs/evidence/wp-01/runtime/page-body.html#sha256:25024df12beb9ec369aa315314bb70343db71ef56f9974dc307e5b83fd55c691
     - docs/evidence/wp-01/runtime/client-asset.js#sha256:6b1d5556b9a152c3cda207b3c932c8b4018b0a83da91e911d32aba98a60c9502
@@ -362,6 +270,5 @@ local_runtime_evidence:
     - docs/evidence/wp-01/runtime/startup-shutdown.log#sha256:baf049408072288ca17ea56761aadb79e3ca7879a79c5f66b6bd87283c07f853
     - docs/evidence/wp-01/runtime/checksums.sha256#sha256:5e17fa1ee366d7ae4490694aadf25e899121fd6cc82a47a9fcac0c3227d8283f
   failures_and_retests:
-    - The original standalone client-asset HTTP 404 and its successful packaging correction are preserved in docs/evidence/wp-01/runtime/failure-retest.yaml.
-    - The exact-delivery sandboxed runtime attempt failed loopback bind with EPERM; the approved narrow-permission retest passed both HTTP probes, graceful SIGINT shutdown, and no-listener verification.
-    - The first exact-delivery reproducibility attempt could not fetch a missing cached build backend under restricted networking; the authorized retest ran two clean frozen-lock builds and produced byte-identical complete artifacts.
+    - The original standalone client-asset HTTP 404 and its successful packaging correction remain preserved in docs/evidence/wp-01/runtime/failure-retest.yaml.
+    - The exact-delivery Python build first encountered sandbox DNS denial for its pinned build backend; the authorized network retest produced all ten distributions.
