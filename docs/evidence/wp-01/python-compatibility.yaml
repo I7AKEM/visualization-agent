@@ -50,7 +50,7 @@ results:
   - command: .venv/bin/pytest -q tests/compatibility/python/test_vercel_ai_adapter.py tests/unit/test_python_foundation.py
     exit_code: 0
     result: 5 passed
-  - command: pnpm --filter @visualization-agent/web test:compat
+  - command: corepack pnpm --filter @visualization-agent/web test:compat
     exit_code: 0
     result: 2 files passed; 4 tests passed; exact Python-generated custom-data and HITL fixtures consumed by AI SDK 7
 decision: >-

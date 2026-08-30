@@ -14,19 +14,19 @@
     "packages/*"
   ],
   "scripts": {
-    "audit:prod": "pnpm audit --prod --audit-level high",
-    "build": "pnpm -r --if-present build",
+    "audit:prod": "corepack pnpm audit --prod --audit-level high",
+    "build": "corepack pnpm -r --if-present build",
     "check:peers": "node scripts/check-peer-compatibility.mjs",
     "check:runtime": "node scripts/check-runtime-pins.mjs",
-    "lint": "pnpm -r --if-present lint",
+    "lint": "corepack pnpm -r --if-present lint",
     "presbom": "node scripts/prepare-sbom.mjs",
     "sbom": "node scripts/generate-node-sbom.mjs",
-    "test": "pnpm run test:foundation && pnpm -r --if-present test:unit",
-    "test:compat": "pnpm run test:foundation && pnpm --filter @visualization-agent/web test:compat",
+    "test": "corepack pnpm run test:foundation && corepack pnpm -r --if-present test:unit",
+    "test:compat": "corepack pnpm run test:foundation && corepack pnpm --filter @visualization-agent/web test:compat",
     "test:foundation": "node --test tests/compatibility/node/*.test.mjs",
-    "test:unit": "pnpm -r --if-present test:unit",
-    "typecheck": "pnpm -r --if-present typecheck",
-    "verify": "pnpm run check:runtime && pnpm run check:peers && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build"
+    "test:unit": "corepack pnpm -r --if-present test:unit",
+    "typecheck": "corepack pnpm -r --if-present typecheck",
+    "verify": "corepack pnpm run check:runtime && corepack pnpm run check:peers && corepack pnpm run lint && corepack pnpm run typecheck && corepack pnpm run test && corepack pnpm run build"
   },
   "devDependencies": {
     "@cyclonedx/cdxgen": "12.8.4",

@@ -45,7 +45,7 @@ sboms:
   node:
     format: CycloneDX JSON 1.6
     generator: '@cyclonedx/cdxgen 12.8.4'
-    command: pnpm sbom
+    command: corepack pnpm sbom
     output: artifacts/sbom/node.cdx.json
     output_policy: ephemeral CI artifact; not source controlled
     component_count: 884
@@ -63,11 +63,23 @@ sboms:
   platform_note: >-
     Python environment SBOM membership follows locked environment markers, so Linux CI may have
     a different exact component count/hash from Darwin while remaining derived from the same uv.lock.
-  license_metadata_boundary: >-
-    The generators omitted license metadata for 182 transitive/platform components. Local policy
-    reports this count and validates all 47 declarations/48 reviewed exact records, but the
-    mandatory full-lock license decision remains blocked until hosted dependency review succeeds
-    for the exact corrected handoff commit.
+  license_metadata_boundary:
+    darwin_arm64_recorded_host:
+      node_components_without_generator_license_metadata: 186
+      python_components_without_generator_license_metadata: 7
+      unique_omitted_component_count: 182
+    failed_old_handoff_linux_run:
+      node_components: 884
+      node_components_with_generator_license_metadata: 697
+      python_components: 163
+      python_components_with_generator_license_metadata: 156
+      unique_omitted_component_count: 183
+      scope: immutable failed run 33295329884; not green evidence
+    policy: >-
+      Omission counts are platform-specific because the locked Python environment follows marker
+      selection. Local policy validates all 47 declarations/48 reviewed exact records, but the
+      mandatory full-lock license decision remains blocked until hosted Dependency Review
+      succeeds for the exact corrected handoff commit.
 legacy_poc_preservation:
   package_lock_sha256: 5222d716a8480a61d417ec2efef1d5da44741f1c3d2a12ea87a778e3339650ff
   package_manifest_fixture: docs/evidence/wp-01/fixtures/legacy-poc/package.json

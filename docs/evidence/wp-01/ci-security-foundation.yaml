@@ -112,8 +112,9 @@ local_results:
   - command: .venv/bin/pytest -q
     exit_code: 0
     result: >-
-      Python compatibility/unit tests and 32 CI policy/security failure cases passed on the
-      staged correction; the exact final count is repeated in the handoff after delivery.
+      All 46 tests passed: the Python compatibility/unit foundations plus 41 CI policy/security
+      cases, including nine focused Corepack execution-policy positive, negative, and nested-path
+      regressions. The exact final count is repeated in the handoff after delivery.
   - command: .venv/bin/ruff format --check . && .venv/bin/ruff check . && .venv/bin/mypy services packages
     exit_code: 0
     result: Formatting and lint passed; strict mypy found no issues in five Python source files.
@@ -125,7 +126,7 @@ local_results:
     result: >-
       All five Python workspace packages produced both source distributions and wheels under
       SOURCE_DATE_EPOCH=315532800; the exact filenames are recorded in the corrected handoff.
-  - command: scripts/ci/audit_python_lock.sh and pnpm audit --prod --audit-level high
+  - command: scripts/ci/audit_python_lock.sh and corepack pnpm audit --prod --audit-level high
     exit_code: 0
     result: Both exact third-party locks reported no known vulnerabilities on the recorded advisory databases.
   - command: scripts/ci/validate_sbom.py and scripts/ci/validate_licenses.py
@@ -140,12 +141,13 @@ local_results:
   - command: scripts/ci/scan_secrets.py --history
     exit_code: 0
     result: PASS current tracked/untracked text plus Git patch history; findings never echo values.
-  - command: scripts/ci/reproducible_foundation.sh /private/tmp/wp01-repro-final
+  - command: scripts/ci/reproducible_foundation.sh /private/tmp/wp01-hosted-correction-repro-network-precommit
     exit_code: 0
     result: >-
-      Corrected preflight used two distinct clean frozen-lock workspaces, deterministic Next
-      build entropy/ID, and checkout-prefix normalization; it compared 1,359 complete generated
-      files and byte-identical archives. The handoff records a fresh exact-delivery rerun and hash.
+      Corrected preflight used a PATH containing node, Corepack, and uv but no pnpm executable,
+      two distinct clean frozen-lock workspaces, deterministic Next build entropy/ID, and
+      checkout-prefix normalization. It compared 1,359 complete generated files and
+      byte-identical archives at sha256:1c1954ef469df03b098ea37b30265e77d6bfc5436f7d4fe2c0ce9d0bcfa43361.
   - command: >-
       python3 scripts/ci/install_ci_tool.py trivy --output-dir /private/tmp/wp01-ci-tools
       --archive /private/tmp/trivy_0.73.0_Linux-64bit.tar.gz
